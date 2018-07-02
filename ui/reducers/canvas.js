@@ -79,7 +79,12 @@ export default function canvas(state = initialState, action) {
       if(action.status.roi==true){
         alert('ROI is already set, if you want an acquisition with full image reset ROI (throught button ROI -> Reset ROI or with lima), then restart webserver and actualize web browser.')
       }
-      return Object.assign({}, state, {beam_markX:action.status.beam_mark_x, beam_markY:action.status.beam_mark_y, imageMaxWidth:action.status.full_width, cameraFullWidth:action.status.full_width, cameraFullHeight: action.status.full_height, imageMaxHeight:action.status.full_height,imageRatio:action.status.full_width/action.status.full_height,windowWidth:((action.windowHeight*0.54)*(action.status.full_width/action.status.full_height)),windowHeight:action.windowHeight*0.54})
+      if(action.status.beam_mark_x!=0 || action.status.beam_mark_y!=0){
+        return Object.assign({}, state, {beam_markX:action.status.beam_mark_x, beam_markY:action.status.beam_mark_y, imageMaxWidth:action.status.full_width, cameraFullWidth:action.status.full_width, cameraFullHeight: action.status.full_height, imageMaxHeight:action.status.full_height,imageRatio:action.status.full_width/action.status.full_height,windowWidth:((action.windowHeight*0.54)*(action.status.full_width/action.status.full_height)),windowHeight:action.windowHeight*0.54})
+      } else {
+        return Object.assign({}, state, {imageMaxWidth:action.status.full_width, cameraFullWidth:action.status.full_width, cameraFullHeight: action.status.full_height, imageMaxHeight:action.status.full_height,imageRatio:action.status.full_width/action.status.full_height,windowWidth:((action.windowHeight*0.54)*(action.status.full_width/action.status.full_height)),windowHeight:action.windowHeight*0.54})
+      }
+      
     }
     //beam_markX:action.status.beam_mark_x, beam_markY:action.status.beam_mark_y can't initialize them since they need dimensions in order to have the rights values
     

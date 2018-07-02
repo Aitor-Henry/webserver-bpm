@@ -51,8 +51,6 @@ class Canvas extends React.Component {
   }
 
   componentDidUpdate(nextProps){ //called when imageSrc is updated
-    //if((nextProps.acqImage!=0 || nextProps.liveRun!=0) && (this.state.imageSrc != "" || (this.props.beam_markX!=nextProps.beam_markX && this.props.beam_markY!=nextProps.beam_markY))){
-    //if(nextProps.acqImage!=0 || nextProps.liveRun!=0){
     if((nextProps.acqImage!=0 || nextProps.liveRun!=0) || (this.props.beam_markX!=nextProps.beam_markX && this.props.beam_markY!=nextProps.beam_markY) || (this.props.rotation!=nextProps.rotation)){
       this.updateImage(nextProps);
     }
@@ -71,7 +69,6 @@ class Canvas extends React.Component {
   updateImage(nextProps){
     const ctx = this.refs.myCanvas.getContext('2d');
     let src = this.state.imageSrc;
-    //let src = imageSrc;
 
     this.image.onload = () => {
       ctx.save();

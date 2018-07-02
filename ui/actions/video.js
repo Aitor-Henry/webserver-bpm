@@ -12,7 +12,7 @@ export function updateBackground(){
 
     return (dispatch,getState) => {
       const state = getState()
-      fetch('/'+state.bpmState.client_id+'/api/set_background?set='+state.video.set)
+      fetch('/'+state.bpmState.client_id+'/api/set_background?backgroundstate='+state.video.backgroundstate)
         .then((response) => {
           if(!response.ok){
             throw Error(response.statusText);

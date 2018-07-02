@@ -147,7 +147,7 @@ class BV:
                                   "autoscale": self.bpm_device.autoscale,
                                   "calib_x": self.bpm_device.calibration[0],
                                   "calib_y":  self.bpm_device.calibration[1],
-                                  #"background": bv._has_background(), # need to check how to change that
+                                  "background": int(self.bpm_device.HasBackground()),
                                   "beam_mark_x": float(self.bpm_device.beammark[0]),
                                   "beam_mark_y": float(self.bpm_device.beammark[1])})
           query["event"].set()
@@ -197,18 +197,15 @@ class BV:
         query["reply"].update({ "intensity": self.bpm_device.GetPixelIntensity([x,y]) })
         query["event"].set()
 
-
-
-"""
-      
-
       elif query["query"] == "set_background":
-          if int(query["set"]): # if bool(int(query["set"])) ??
-            bv.take_background() # same stuff, need to see how to handle this.
+          if int(query["backgroundstate"]): # if bool(int(query["set"])) ??
+            if self.getAcqStatus()=='Running':
+              raise RuntimeError, "Acquisition has not finished (or Live mode is on)"
+            else:
+              self.bpm_device.TakeBackground() # same stuff, need to see how to handle this.
           else:
-            bv.reset_background()
-          query["event"].set()"""
-
+            self.bpm_device.ResetBackground()
+          query["event"].set()
 
 
 """ 
@@ -334,7 +331,7 @@ def get_intensity(camera):
 
 @bottle.get("/:camera/api/set_background")
 def set_background(camera):
-  return query("set_background", set = bottle.request.GET["set"])
+  return query("set_background", backgroundstate=bottle.request.GET["backgroundstate"])
 
 #######TO DIALOGUE WITH WEBSOCKET FROM FRONT END SIDE#######
 @bottle.get('/:camera/api/image_channel', apply=[websocket])

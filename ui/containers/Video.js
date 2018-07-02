@@ -149,6 +149,7 @@ class Video extends React.Component {
             {
               drawPoints: false,
               showRoller: false,
+              //drawXAxis: false,
               legend : 'never',
               //valueRange: [0.0, max2],
               dateWindow : [0, this.props.profileY.length],
@@ -256,11 +257,11 @@ class Video extends React.Component {
                 </div>*/}
               </div>
               <div className="row">
-                <div className="col-md-6">
+                <div className="col-md-8">
                   <Canvas ref='canvas' />
                 </div>
-                <div className="col-md-1">
-                  <div id='graph2'  width={this.props.windowWidth} height={this.props.windowHeight}/>
+                <div className="col-md-3" style={styles_rotate_graph}>
+                  <div id='graph2' width={this.props.windowWidth} height={this.props.windowHeight}/>
                 </div>
               </div>
               <div className="row">
@@ -277,10 +278,10 @@ class Video extends React.Component {
   }
 
 }
-//style={styles_rotate_graph}
-//var styles_rotate_graph = {
-//  transform: "rotate(90deg)"
-//};
+
+var styles_rotate_graph = {
+  transform: "rotate(90deg)"
+};
 
 function mapStateToProps(state) {
   return {

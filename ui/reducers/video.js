@@ -4,7 +4,7 @@ const initialState = {
   temperatureCheckedBool:0,
   yCheckedBool: 0,
   maxValue: "",
-  set: 1,
+  backgroundstate: 1,
   activeBkgnd:false,
   crosshair: 0,
   activeCrosshair: false,
@@ -33,7 +33,6 @@ export default function video(state = initialState, action) {
       else{
         return Object.assign({}, state, {autoscaleCheckedBool : 0})
       }
-
 
     }
     case 'TEMPERATURE_CHECKED':
@@ -74,11 +73,11 @@ export default function video(state = initialState, action) {
 
     case 'BACKGROUND_STATE':
     {
-      if(state.set === 1){
-        return Object.assign({}, state, {set: 0, activeBkgnd:true})
+      if(state.backgroundstate === 1){
+        return Object.assign({}, state, {backgroundstate: 0, activeBkgnd:true})
       }
       else{
-        return Object.assign({}, state, {set: 1, activeBkgnd:false})
+        return Object.assign({}, state, {backgroundstate: 1, activeBkgnd:false})
       }
 
 
