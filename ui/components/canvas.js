@@ -41,9 +41,7 @@ class Canvas extends React.Component {
       if(nextProps.liveRun==1 && this.props.liveRun==1){
       } else {
         this.Askimage();
-      }
-      
-      
+      }      
     };
     
   }
@@ -55,7 +53,7 @@ class Canvas extends React.Component {
   componentDidUpdate(nextProps){ //called when imageSrc is updated
     //if((nextProps.acqImage!=0 || nextProps.liveRun!=0) && (this.state.imageSrc != "" || (this.props.beam_markX!=nextProps.beam_markX && this.props.beam_markY!=nextProps.beam_markY))){
     //if(nextProps.acqImage!=0 || nextProps.liveRun!=0){
-    if((nextProps.acqImage!=0 || nextProps.liveRun!=0) || (this.props.beam_markX!=nextProps.beam_markX && this.props.beam_markY!=nextProps.beam_markY)){
+    if((nextProps.acqImage!=0 || nextProps.liveRun!=0) || (this.props.beam_markX!=nextProps.beam_markX && this.props.beam_markY!=nextProps.beam_markY) || (this.props.rotation!=nextProps.rotation)){
       this.updateImage(nextProps);
     }
     
@@ -92,10 +90,24 @@ class Canvas extends React.Component {
       else{ //sinon on dessine juste l'image
         ctx.drawImage(this.image, 0, 0,this.props.windowWidth,this.props.windowHeight); //On dessine l'image
       }
-      if(this.props.beam_markX != undefined && this.props.beam_markY != undefined && !this.props.activeROI && this.props.rotation==nextProps.rotation){ //On dessine le crosshair que si les coordonne sont defini et quon nest pas en roi
-        this.draw_Beam_Marker()
+      if(this.props.beam_markX != undefined && this.props.beam_markY != undefined && !this.props.activeROI && this.props.rotation === 0){
+        ctx.strokeStyle = "#ef0000" //red
+        ctx.font = '15px Arial'
+        ctx.fillStyle = "#ef0000" 
+        ctx.beginPath();
+        ctx.moveTo(0, this.props.beam_markY*this.props.windowHeight/this.props.imageMaxHeight);
+        ctx.lineTo(this.props.windowWidth, this.props.beam_markY*this.props.windowHeight/this.props.imageMaxHeight);
+        ctx.stroke();
+        ctx.moveTo(this.props.beam_markX*this.props.windowWidth/this.props.imageMaxWidth, 0);
+        ctx.lineTo(this.props.beam_markX*this.props.windowWidth/this.props.imageMaxWidth, this.props.windowHeight);
+        ctx.stroke();
+        ctx.closePath();
+      } else {
+        if(this.props.beam_markX != undefined && this.props.beam_markY != undefined){ // in order to execute it only once, 
+          this.props.resetCrosshair();                                                //not everytime image is updated which will trigger webserver and tango device.
+        }
       }
-      if(this.props.start_X != undefined && this.props.start_Y != undefined){
+      if(this.props.start_X != undefined && this.props.start_Y != undefined && this.props.rotation===0){
         this.draw_ROI_Marker()
       }
       ctx.restore();
@@ -140,52 +152,21 @@ class Canvas extends React.Component {
 
   draw_Beam_Marker(e){
     const ctx = this.refs.myCanvas.getContext('2d');
-    ctx.strokeStyle = "#ef0000" //rouge
-    ctx.font = '15px Arial'
-    ctx.fillStyle = "#ef0000"
-    console.log("this.props.rotation : ", this.props.rotation, ", this.props.beam_markX : ", this.props.beam_markX, ", this.props.beam_markY : ", this.props.beam_markY)
-
+    
 
     if(!this.props.activeROI){//On dessine que si l'utilisateur est pas en train de roi
       if(e != undefined){ //Quand on clique sur l'image
-        if(this.props.beam_markX != e.nativeEvent.offsetX && this.props.beam_markY != e.nativeEvent.offsetY && this.props.crosshair === 0){ //On ne dessine que si nouveaux coordonnes et que le crosshair n'est pas lock
-          this.props.setBeamMark(e.nativeEvent.offsetX,e.nativeEvent.offsetY); //met a jour letat et va donc rappeler updateImage et redessiner l'image puis les lignes save
+        if((this.props.beam_markX != e.nativeEvent.offsetX*this.props.imageMaxWidth/this.props.windowWidth || this.props.beam_markY != e.nativeEvent.offsetY*this.props.imageMaxHeight/this.props.windowHeight) && this.props.crosshair === 0 && this.props.rotation===0){ 
+          this.props.setBeamMark(Math.round(e.nativeEvent.offsetX*this.props.imageMaxWidth/this.props.windowWidth),Math.round(e.nativeEvent.offsetY*this.props.imageMaxHeight/this.props.windowHeight));
         }
       } 
-        else if(this.props.beam_markX != undefined && this.props.beam_markY != undefined){ //Quand on passe a une nouvelle image
-          //ctx.clearRect(0,0,this.refs.myCanvas.width,this.refs.myCanvas.height)
-          ctx.beginPath();
-          ctx.moveTo(0, this.props.beam_markY);
-          ctx.lineTo(this.props.windowWidth, this.props.beam_markY);
-          ctx.stroke();
-          ctx.moveTo(this.props.beam_markX, 0);
-          ctx.lineTo(this.props.beam_markX, this.props.windowHeight);
-          ctx.stroke();
-          ctx.closePath();
-        }
-
-        else if (this.props.rotation != 0){
-          //this.drawing = false;
-          
-          /*ctx.save(); //crosshair is reset in case of rotation, keep the old code (which is not working anyway)
-          ctx.beginPath();
-          ctx.rotate(this.props.rotation * Math.PI / 180);
-          ctx.moveTo(-this.props.windowHeight/2, this.props.beam_markY);
-          ctx.lineTo(this.props.windowWidth, this.props.beam_markY);
-          ctx.stroke();
-          ctx.moveTo(this.props.beam_markX, -this.props.windowWidth/2);
-          ctx.lineTo(this.props.beam_markX, this.props.windowHeight);
-          ctx.stroke();
-          ctx.closePath();
-          ctx.restore();*/
-      }
     }
       else if(this.props.activeROI){
         this.drawing = false;
         this.refs.myCanvas.style.cursor = "default";
         this.props.setROI(); //On envoi au serveur le roi etablie
       }
-    }
+  }
 
 
 

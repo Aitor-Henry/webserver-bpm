@@ -93,6 +93,10 @@ class Video extends React.Component {
 
   resetROI(){
     this.props.resetRoi(); //On remet le roi a 0
+    if(this.props.activeCrosshair){
+      this.crosshair();
+    }
+    this.props.resetCrosshair();
   }
 
   rotation(rotate){
@@ -160,7 +164,7 @@ class Video extends React.Component {
   render(){
     const crosshair = (
         <Tooltip id="tooltip">Click here to set/lock crosshair data :
-                              X={Math.round((this.props.beam_markX*this.props.imageMaxWidth/this.props.windowWidth)*1)/1} Y={Math.round((this.props.beam_markY*this.props.imageMaxHeight/this.props.windowHeight)*1)/1}</Tooltip>
+                              X={this.props.beam_markX} Y={this.props.beam_markY}</Tooltip>
     );
 
     const resetCrosshair = (
@@ -203,7 +207,7 @@ class Video extends React.Component {
                   <ButtonGroup>
 
                     <OverlayTrigger placement="left" overlay={crosshair}>
-                      <SplitButton title=/*<Glyphicon glyph="screenshot" />*/ ' Lock Crosshair'   id="bg-vertical-splitbuttons-1" onClick={this.crosshair} disabled={this.props.liveRun ===1} active={this.props.activeCrosshair}>
+                      <SplitButton title='Lock Crosshair'   id="bg-vertical-splitbuttons-1" onClick={this.crosshair} disabled={this.props.liveRun ===1 || this.props.rotate!=0 || this.props.beam_markX===undefined || this.props.beam_markY===undefined} active={this.props.activeCrosshair}>
                         <MenuItem onClick={this.resetCROSSHAIR} disabled={this.props.liveRun ===1}> Reset <Glyphicon glyph="screenshot" /></MenuItem>
                       </SplitButton>
                     </OverlayTrigger>
@@ -217,7 +221,7 @@ class Video extends React.Component {
                     </OverlayTrigger>
 
                     <OverlayTrigger placement="top" overlay={roi}>
-                      <SplitButton title='ROI'   id="bg-vertical-splitbuttons-2" onClick={this.roi} disabled={this.props.liveRun ===1} active={this.props.activeROI}>
+                      <SplitButton title='ROI'   id="bg-vertical-splitbuttons-2" onClick={this.roi} disabled={this.props.liveRun ===1 || this.props.rotate!=0} active={this.props.activeROI}>
                       <MenuItem onClick={this.resetROI} disabled={this.props.liveRun ===1 || this.props.resetDesactivated}><Glyphicon glyph="remove" /> Reset ROI</MenuItem>
                     </SplitButton>
                     </OverlayTrigger>

@@ -30,7 +30,8 @@ export function backgroundState(){
 export function setCrosshair(){
   return (dispatch,getState) => {
     const state = getState()
-    fetch('/'+state.bpmState.client_id+'/api/lock_beam_mark?x='+Math.round((state.canvas.beam_markX*state.canvas.imageMaxWidth/state.canvas.windowWidth)*1)/1+'&y='+Math.round((state.canvas.beam_markY*state.canvas.imageMaxHeight/state.canvas.windowHeight)*1)/1)
+    fetch('/'+state.bpmState.client_id+'/api/lock_beam_mark?x='+state.canvas.beam_markX+'&y='+state.canvas.beam_markY)
+    //fetch('/'+state.bpmState.client_id+'/api/lock_beam_mark?x='+state.canvas.beam_markX+'&y='+state.canvas.beam_markY)
       .then((response) => {
         if(!response.ok){
           throw Error(response.statusText);
@@ -41,8 +42,6 @@ export function setCrosshair(){
   }
 
 }
-
-
 
 export function setCrosshairDone(){
   return { type: 'SET_CROSSHAIR'}

@@ -9,8 +9,6 @@ const initialState = {
   profileY : [],
   beam_markX: undefined,
   beam_markY: undefined,
-  percentMarkX:undefined,
-  percentMarkY:undefined,
   start_X:undefined,
   start_Y:undefined,
   prevX:undefined,
@@ -21,6 +19,8 @@ const initialState = {
   resetDesactivated:true,
   imageMaxWidth:0,
   imageMaxHeight:0,
+  cameraFullWidth:undefined, //works only if roi is not already set when webserver start
+  cameraFullHeight: undefined,
   start_X_display:undefined,
   start_Y_display:undefined,
   windowWidth:undefined,
@@ -41,12 +41,12 @@ export default function canvas(state = initialState, action) {
 
     case 'SET_BEAM_MARK' :
     {
-      return Object.assign({}, state, {beam_markX:action.X, beam_markY:action.Y,percentMarkX:action.X/state.windowWidth,percentMarkY:action.Y/state.windowHeight})
+      return Object.assign({}, state, {beam_markX:action.X, beam_markY:action.Y})
     }
 
     case 'SET_ROI_MARK' :
     {
-      return Object.assign({}, state, {start_X:action.X, start_Y:action.Y,prevX:action.X, prevY:action.Y,start_X_display:Math.round((action.X*state.imageMaxWidth/state.windowWidth)*1)/1,start_Y_display:Math.round((action.Y*state.imageMaxHeight/state.windowHeight)*1)/1 })
+      return Object.assign({}, state, {start_X:action.X, start_Y:action.Y,prevX:action.X, prevY:action.Y,start_X_display:Math.round(action.X*state.imageMaxWidth/state.windowWidth),start_Y_display:Math.round(action.Y*state.imageMaxHeight/state.windowHeight)})
     }
 
     case 'SET_PREV_ROI_MARK' :
@@ -56,7 +56,7 @@ export default function canvas(state = initialState, action) {
 
     case 'SET_ROI_DONE' :
     {
-      return Object.assign({}, state, {alertHidden:false,start_X:undefined, start_Y:undefined,prevX:undefined, prevY:undefined,resetDesactivated:false})
+      return Object.assign({}, state, {alertHidden:false,start_X:undefined, start_Y:undefined,prevX:undefined, prevY:undefined,resetDesactivated:false, imageMaxHeight: state.height, imageMaxWidth: state.width})
     }
     case 'HIDE_ALERT' :
     {
@@ -65,7 +65,7 @@ export default function canvas(state = initialState, action) {
 
     case 'RESET_ROI_DONE' :
     {
-      return Object.assign({}, state, {start_X:undefined, start_Y:undefined,prevX:undefined, prevY:undefined,width:undefined,height:undefined,start_X_display:undefined,start_Y_display:undefined,resetDesactivated:true})
+      return Object.assign({}, state, {start_X:undefined, start_Y:undefined,prevX:undefined, prevY:undefined,width:undefined,height:undefined,start_X_display:undefined,start_Y_display:undefined,resetDesactivated:true, imageMaxWidth:state.cameraFullWidth, imageMaxHeight: state.cameraFullHeight})
     }
 
     case 'RESET_CROSSHAIR' :
@@ -76,13 +76,13 @@ export default function canvas(state = initialState, action) {
     case 'GET_STATUS_DONE' :
     {
       //CALCULS ET TESTS A FAIRE
-      console.log(action.status.roi)
       if(action.status.roi==true){
         alert('ROI is already set, if you want an acquisition with full image reset ROI (throught button ROI -> Reset ROI or with lima), then restart webserver and actualize web browser.')
       }
-      return Object.assign({}, state, {imageMaxWidth:action.status.full_width, imageMaxHeight:action.status.full_height,imageRatio:action.status.full_width/action.status.full_height,windowWidth:((action.windowHeight*0.54)*(action.status.full_width/action.status.full_height)),windowHeight:action.windowHeight*0.54})
+      return Object.assign({}, state, {beam_markX:action.status.beam_mark_x, beam_markY:action.status.beam_mark_y, imageMaxWidth:action.status.full_width, cameraFullWidth:action.status.full_width, cameraFullHeight: action.status.full_height, imageMaxHeight:action.status.full_height,imageRatio:action.status.full_width/action.status.full_height,windowWidth:((action.windowHeight*0.54)*(action.status.full_width/action.status.full_height)),windowHeight:action.windowHeight*0.54})
     }
-
+    //beam_markX:action.status.beam_mark_x, beam_markY:action.status.beam_mark_y can't initialize them since they need dimensions in order to have the rights values
+    
     case 'UPDATE_DIMENSIONS' :
     {
       //CALCULS ET TESTS A FAIRE pour le ratio !
