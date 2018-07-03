@@ -114,13 +114,8 @@ class Video extends React.Component {
   graph(){
     
     var data = [];
-    var max = 0;
-    //var t = new Date();
     for(let i=0;i != this.props.profileX.length;i++){
       data.push([i,this.props.profileX[i]]);
-      if(this.props.profileX[i] > max){
-        max = this.props.profileX[i]+1000.0;
-      }
     }
     
     var g = new Dygraph(document.getElementById("graph1"), data,
@@ -128,32 +123,48 @@ class Video extends React.Component {
               drawPoints: false,
               showRoller: false,
               legend : 'never',
-              //valueRange: [0.0, max],
               dateWindow : [0, this.props.profileX.length],
-              labels: ['Time', 'Random']
+              labels: ['Time', 'Random'],
+              axes: {
+                x: {
+                  axisLabelFormatter: function(x) {
+                    return '';
+                  }
+                },
+                y: {
+                  axisLabelFormatter: function(y) {
+                    return '';
+                  }
+                }
+              }
             });
-
+            
 
 
     var data2 = [];
-    var max2 = 0;
-
     for(let i=0;i != this.props.profileY.length;i++){
       data2.push([i,this.props.profileY[i]])
-      if(this.props.profileY[i] > max2){
-        max2 = this.props.profileY[i]+1000.0;
-      }
     }
 
     var g2 = new Dygraph(document.getElementById("graph2"), data2,
             {
               drawPoints: false,
               showRoller: false,
-              //drawXAxis: false,
               legend : 'never',
-              //valueRange: [0.0, max2],
               dateWindow : [0, this.props.profileY.length],
-              labels: ['Time', 'Random']
+              labels: ['Time', 'Random'],
+              axes: {
+                x: {
+                  axisLabelFormatter: function(x) {
+                    return '';
+                  }
+                },
+                y: {
+                  axisLabelFormatter: function(y) {
+                    return '';
+                  }
+                }
+              }
             });
 
   }
@@ -257,7 +268,7 @@ class Video extends React.Component {
                 </div>*/}
               </div>
               <div className="row">
-                <div className="col-md-8">
+                <div className="col-md-7">
                   <Canvas ref='canvas' />
                 </div>
                 <div className="col-md-3" style={styles_rotate_graph}>

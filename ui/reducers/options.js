@@ -73,6 +73,7 @@ export default function options(state = initialState, action) {
 
     case 'TEXT_EMPTY_SAMPLING':
     {
+      alert("Acquisition rate can't be null or can't be inferior to exposure time. reminder : s = 1/Hz");
       return Object.assign({}, state, {samplingRateValue:""})
     }
 

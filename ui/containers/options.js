@@ -37,7 +37,8 @@ class Options extends React.Component {
     {/*console.log(ReactDom.findDOMNode(this.refs.sampling).value)*/}
 
 
-    if(ReactDom.findDOMNode(this.refs.sampling).value > 0 ){
+    if(ReactDom.findDOMNode(this.refs.sampling).value > -0.01 && ReactDom.findDOMNode(this.refs.sampling).value<=(1.0/this.props.exposureTimeValue)){
+
       this.props.textEnterSampling(ReactDom.findDOMNode(this.refs.sampling).value);
     }
     else{

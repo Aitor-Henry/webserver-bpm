@@ -31,14 +31,14 @@ class Infos extends React.Component {
         <div className="row">
         <div className="col-md-2"></div>
           <div className="col-md-9">
-          <h3> Frame {this.props.img_num} | Fwhm {Math.round(this.props.fwhmX*100)/100} x {Math.round(this.props.fwhmY*100)/100} | Intensity={this.props.intensity} bx={Math.round(this.props.bx*1)/1} by= {Math.round(this.props.by*1)/1}
+          <h3> Frame {this.props.img_num} | Fwhm {Math.round(this.props.fwhmX*100)/100} x {Math.round(this.props.fwhmY*100)/100} | Intensity={this.props.intensity} bx={Math.round(this.props.bx)} by= {Math.round(this.props.by)}
           <p hidden={!this.props.activeROI}>ROI: x={this.props.start_X_display} y={this.props.start_Y_display} w={this.props.width} h={this.props.height}  </p></h3>
           </div>
         </div>
         <div className="row">
         <div className="col-md-5"></div>
           <div className="col-md-2">
-          <Alert bsStyle="success" hidden={this.props.alertHidden}> ROI was applied successfully ... <Glyphicon onClick={this.closeClicked}  glyph={'remove'} /></Alert>
+          <Alert bsStyle="success" hidden={this.props.alertHidden}> ROI is apply/reset successfully ... Acquire new image.<Glyphicon onClick={this.closeClicked}  glyph={'remove'} /></Alert>
           </div>
         </div>
       </div>

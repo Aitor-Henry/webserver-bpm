@@ -36,7 +36,7 @@ export default function canvas(state = initialState, action) {
   switch (action.type) {
     case 'UPDATE_DATA' :
     { //action.status.framenb
-      return Object.assign({}, state, {img_num : action.data.framenb, fwhmX: action.data.fwhm_x,fwhmY: action.data.fwhm_y, intensity : action.data.I, bx: action.data.X,by: action.data.Y, profileX : action.data.profile_x , profileY : action.data.profile_y })
+      return Object.assign({}, state, {alertHidden:true, img_num : action.data.framenb, fwhmX: action.data.fwhm_x,fwhmY: action.data.fwhm_y, intensity : action.data.I, bx: action.data.X,by: action.data.Y, profileX : action.data.profile_x , profileY : action.data.profile_y })
     }
 
     case 'SET_BEAM_MARK' :
@@ -65,7 +65,7 @@ export default function canvas(state = initialState, action) {
 
     case 'RESET_ROI_DONE' :
     {
-      return Object.assign({}, state, {start_X:undefined, start_Y:undefined,prevX:undefined, prevY:undefined,width:undefined,height:undefined,start_X_display:undefined,start_Y_display:undefined,resetDesactivated:true, imageMaxWidth:state.cameraFullWidth, imageMaxHeight: state.cameraFullHeight})
+      return Object.assign({}, state, {alertHidden:false, start_X:undefined, start_Y:undefined,prevX:undefined, prevY:undefined,width:undefined,height:undefined,start_X_display:undefined,start_Y_display:undefined,resetDesactivated:true, imageMaxWidth:state.cameraFullWidth, imageMaxHeight: state.cameraFullHeight})
     }
 
     case 'RESET_CROSSHAIR' :
@@ -91,18 +91,18 @@ export default function canvas(state = initialState, action) {
     case 'UPDATE_DIMENSIONS' :
     {
       //CALCULS ET TESTS A FAIRE pour le ratio !
-      if(state.beam_markX!=undefined && state.beam_markY!=undefined){
-        return Object.assign({}, state, {windowWidth:(action.windowHeight*0.54)*state.imageRatio,windowHeight:action.windowHeight*0.54,beam_markX:((action.windowHeight*0.54)*state.imageRatio)*state.percentMarkX,beam_markY:(action.windowHeight*0.54)*state.percentMarkY})
-      } else {
-        return Object.assign({}, state, {windowWidth:(action.windowHeight*0.54)*state.imageRatio,windowHeight:action.windowHeight*0.54})
-      }
-      
+      //if(state.beam_markX!=undefined && state.beam_markY!=undefined){
+      //  return Object.assign({}, state, {windowWidth:(action.windowHeight*0.54)*state.imageRatio,windowHeight:action.windowHeight*0.54,beam_markX:Math.round(action.windowHeight*state.imageRatio*0.54*state.beam_markX/state.windowWidth),beam_markY:Math.round(action.windowHeight*0.54*state.beam_markY/state.windowHeight)})
+      //} else {
+      //  return Object.assign({}, state, {windowWidth:(action.windowHeight*0.54)*state.imageRatio,windowHeight:action.windowHeight*0.54})
+      //}
+      return Object.assign({}, state, {windowWidth:(action.windowHeight*0.54)*state.imageRatio,windowHeight:action.windowHeight*0.54})
     }
 
     case 'SWITCH_DIMENSIONS' :
     {
       //CALCULS ET TESTS A FAIRE
-      return Object.assign({}, state, {windowWidth:action.windowWidth,windowHeight:action.windowHeight}) //utilisee pour lq rotation, inversee les dimensiins
+      return Object.assign({}, state, {windowWidth:action.windowWidth,windowHeight:action.windowHeight}) //used in rotation
     }
 
     default:

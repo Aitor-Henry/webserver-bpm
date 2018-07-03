@@ -17,6 +17,15 @@ const initialState = {
 export default function video(state = initialState, action) {
 
   switch (action.type) {
+
+    case 'GET_STATUS_DONE':
+    {
+      console.log(action.status.background)
+      if(action.status.background===true){
+        alert('A background is already set, you can reset it by clicking on the \'Bkgnd\' button')
+        return Object.assign({}, state, {backgroundstate: 0, activeBkgnd:true})
+      }
+    }
     case 'LINEAR_CLICKED':
     {
       return Object.assign({}, state, {selectedLut:"Linear"})

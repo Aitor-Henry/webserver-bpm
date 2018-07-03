@@ -96,8 +96,11 @@ class BV:
   def getAcqRate(self):
     return (1.0/(self.limaccds_device.acq_expo_time+self.limaccds_device.latency_time))
 
-  def setAcqRate(self):
-    pass #??? see l.593 in beam_viewer
+  def setAcqRate(self, acqrate):
+    acqrate_sec = 1.0/acqrate
+    if acqrate_sec>=self.limaccds_device.acq_expo_time:
+      self.limaccds_device.latency_time=acqrate_sec-self.limaccds_device.acq_expo_time
+      print self.limaccds_device.latency_time
 
   def setExposuretime(self,exp_t):
     self.limaccds_device.acq_expo_time = exp_t
@@ -147,7 +150,7 @@ class BV:
                                   "autoscale": self.bpm_device.autoscale,
                                   "calib_x": self.bpm_device.calibration[0],
                                   "calib_y":  self.bpm_device.calibration[1],
-                                  "background": int(self.bpm_device.HasBackground()),
+                                  "background": self.bpm_device.HasBackground(),
                                   "beam_mark_x": float(self.bpm_device.beammark[0]),
                                   "beam_mark_y": float(self.bpm_device.beammark[1])})
           query["event"].set()
@@ -180,6 +183,7 @@ class BV:
 
       elif query["query"] == "get_beam_position":
         self.setExposuretime(float(query["exp_t"]))
+        self.setAcqRate(float(query["acq_rate"]))
         if self.limaccds_device.ready_for_next_image==False:
           print "stopping live"
           self.limaccds_device.video_live=False
