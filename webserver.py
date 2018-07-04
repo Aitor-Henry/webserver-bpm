@@ -39,11 +39,9 @@ def my_socket_bind(self, *args, **kwargs):
 socket.socket.bind = my_socket_bind
 
 #Class BV
-
 class BV:
 
   def __init__(self,camera_name):
-    #import pdb; pdb.set_trace()
     self.bvdata = None
     print "camera name : ", camera_name
     tango_device = self.find_tango_device(camera_name)
@@ -55,7 +53,7 @@ class BV:
     self.handle_webserver_queries()
     
 
-  def find_tango_device(self,lima_name): #will change
+  def find_tango_device(self,lima_name):
     tango_db = PyTango.DeviceProxy("sys/database/2")
     beam_viewers_list = tango_db.DbGetDeviceList(["*", "LimaCCDs"])
     for device in beam_viewers_list:
@@ -83,9 +81,7 @@ class BV:
         fwhm_x,fwhm_y,list_int_profile_x,list_int_profile_y, jpegData) = struct.unpack(HEADER_FORMAT, bv_data)
       profile_x=ListStrToListInt(list_int_profile_x)
       profile_y=ListStrToListInt(list_int_profile_y)
-      #print "framenb : ", framenb, ", timestamp : ", timestamp, ", X : ", X, ", Y : ", Y
       result_array = {"framenb" : framenb, "X" : X, "Y" : Y, "I" : I, "fwhm_x" : fwhm_x, "fwhm_y" : fwhm_y,  "jpegData" : jpegData, "profile_x" : profile_x, "profile_y" : profile_y}
-      print "on recupere une image"
       self.bvdata = result_array
       
 
@@ -100,7 +96,6 @@ class BV:
     acqrate_sec = 1.0/acqrate
     if acqrate_sec>=self.limaccds_device.acq_expo_time:
       self.limaccds_device.latency_time=acqrate_sec-self.limaccds_device.acq_expo_time
-      print self.limaccds_device.latency_time
 
   def setExposuretime(self,exp_t):
     self.limaccds_device.acq_expo_time = exp_t
@@ -131,11 +126,15 @@ class BV:
       print query
 
       if query["query"] == "new_image":
-        #self.bvdata = None
-        
         while self.bvdata == None:
           time.sleep(self.getExposuretime()/10) #need to wait bpm return bvdata
         query["reply"].update(self.bvdata)
+        if query["intensity"]!=False:
+          x_int=int(query["intensity"].split(",")[0][1:])
+          y_int=int(query["intensity"].split(",")[1][:-1])
+          query["reply"].update({"intensity": self.bpm_device.GetPixelIntensity([x_int,y_int])})
+        else:
+          query["reply"].update({"intensity": -1})
         query["event"].set()
         self.bvdata = None
 
@@ -212,13 +211,6 @@ class BV:
           query["event"].set()
 
 
-""" 
-      elif query["query"] == "external_changes":
-        # this is the query used to communicate user changes through Tango to web app.
-          gevent.spawn(handle_external_changes, bv, query) # see l.57
-
-"""
-
 # issue with background and (max_width, max_height), device server tango ? Lima.core.bpm ... lima.core.BACKGROUNDSUBSTRACTION ... ?
 
 def get_query():
@@ -286,9 +278,8 @@ def server_static(filename):
 
 @bottle.route("/:camera/")
 def get_camera_page(camera):
-  #import pdb; pdb.set_trace()
+  #Still problem here
   gevent.spawn(BV, camera)
-  #time.sleep(1) #need to wait the class BV is set before loading page
   return bottle.static_file("index.html", root=os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -320,8 +311,7 @@ def set_img_display_config(camera):
 @bottle.get("/:camera/api/update_calibration")
 def update_calib(camera):
   return query("update_calibration", calib_x=bottle.request.GET["x"],
-                                     calib_y=bottle.request.GET["y"],
-                                     save=bottle.request.GET["save"])
+                                     calib_y=bottle.request.GET["y"])
 
 @bottle.get("/:camera/api/lock_beam_mark")
 def lock_beam_mark(camera):
@@ -343,39 +333,14 @@ def provide_images(ws,camera):
   while True:
     client_id = ws.receive()
     if client_id is not None:
-      qres = query("new_image")
+      if client_id=="false": # not terrible
+        qres = query("new_image", intensity=False)
+      else:
+        qres = query("new_image", intensity=client_id)
       tosend = json.dumps(qres)
       ws.send(tosend)
       
     else: break
-
-"""
-@bottle.get('/:camera/api/ext_changes_channel', apply=[websocket])
-def set_config(ws,camera):
-  while True:
-    client_id = ws.receive()
-    if client_id is not None:
-      qres = query("external_changes")
-      tosend = json.dumps(qres)
-      print "changes from Tango server side:", qres
-      ws.send(tosend)
-    
-    else: break
-
-
-
-def handle_external_changes(bv, query): #this will be a problem. events trigger in beam_viewer.py when a third part use and
-    bv._ext_change_event.wait()
-
-    query["reply"].update({"exp_t": bv.ccd_exposure_time,
-                           "in_acquisition": bv.in_acquisition(),
-                           "background": bv._has_background() })
-
-    bv._ext_change_event.clear()
-
-    query["event"].set()
-
-"""
 ###############################################################
 
 if __name__=="__main__":

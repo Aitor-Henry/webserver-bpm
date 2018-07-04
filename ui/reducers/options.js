@@ -7,15 +7,15 @@ const initialState = {
   buttonAcquireText : "Acquire",
   exposureTimeValue: 0.01,
   samplingRateValue: 10,
-  liveCheckedBool: 0, //Sert pour les requetes aux serveur si live ou non
-  liveSet: 0, //sert pour la checkbox cochee ou non
-  liveRun: 0, //pour les bouton de la sidebar disabled ou non
+  liveCheckedBool: 0,
+  liveSet: 0,
+  liveRun: 0,
   acqImage: 0,
-  Xvalue: 1,
-  Yvalue: 1,
+  calib_x: 1,
+  calib_y: 1,
   saveValue: 0,
-  applyDisabled : true,
-  saveDisabled : true,
+  applyDisabled : false,
+  saveDisabled : false,
 
 };
 
@@ -26,9 +26,9 @@ export default function options(state = initialState, action) {
   switch (action.type) {
     
     case 'GET_STATUS_DONE':
-    { //NOT SRE ABOUT THIS
-      return Object.assign({}, state, {liveCheckedBool:Number(action.status.live), exposureTimeValue:action.status.exposure_time, samplingRateValue:action.status.acq_rate , Xvalue:action.status.calib_x, Yvalue:action.status.calib_y})
-    } //liveRun:Number(action.status.live)
+    {
+      return Object.assign({}, state, {liveCheckedBool:Number(action.status.live), exposureTimeValue:action.status.exposure_time, samplingRateValue:action.status.acq_rate , calib_x:action.status.calib_x, calib_y:action.status.calib_y})
+    }
 
     case 'BUTTON_ACQUIRE_PRESSED':
     {
@@ -73,52 +73,51 @@ export default function options(state = initialState, action) {
 
     case 'TEXT_EMPTY_SAMPLING':
     {
-      alert("Acquisition rate can't be null or can't be inferior to exposure time. reminder : s = 1/Hz");
+      alert("Acquisition rate can't be null or can't be lower than exposure time. Reminder : Hz = 1/s");
       return Object.assign({}, state, {samplingRateValue:""})
     }
 
     case 'TEXT_ENTER_X':
     {
-      if(state.Yvalue === ""){
-        return Object.assign({}, state, {Xvalue:action.text,applyDisabled:true,saveDisabled:true})
+      if(state.calib_y === ""){
+        return Object.assign({}, state, {calib_x:action.text,applyDisabled:true,saveDisabled:true})
       }
       else{
-        return Object.assign({}, state, {Xvalue:action.text,applyDisabled:false,saveDisabled:false})
+        return Object.assign({}, state, {calib_x:action.text,applyDisabled:false,saveDisabled:false})
       }
     }
 
     case 'TEXT_EMPTY_X':
     {
-      return Object.assign({}, state, {Xvalue:"",applyDisabled:true,saveDisabled:true})
+      return Object.assign({}, state, {calib_x:"",applyDisabled:true,saveDisabled:true})
     }
 
     case 'TEXT_ENTER_Y':
     {
-      if(state.Xvalue === ""){
-        return Object.assign({}, state, {Yvalue:action.text,applyDisabled:true,saveDisabled:true})
+      if(state.calib_x === ""){
+        return Object.assign({}, state, {calib_y:action.text,applyDisabled:true,saveDisabled:true})
       }
       else{
-        return Object.assign({}, state, {Yvalue:action.text,applyDisabled:false,saveDisabled:false})
+        return Object.assign({}, state, {calib_y:action.text,applyDisabled:false,saveDisabled:false})
       }
 
     }
 
     case 'TEXT_EMPTY_Y':
     {
-      return Object.assign({}, state, {Yvalue:"",applyDisabled:true,saveDisabled:true})
+      return Object.assign({}, state, {calib_y:"",applyDisabled:true,saveDisabled:true})
     }
 
     case 'UPDATE_CALIBRATION_APPLY_DONE':
     {
-       console.log('UPDATE_CALIBRATION_APPLY_DONE')
-       return Object.assign({}, state, {applyDisabled:true,save:0})
+       return Object.assign({}, state, {applyDisabled:true, saveDisabled:true, save:0})
     }
 
     case 'UPDATE_CALIBRATION_SAVE_DONE':
     {
-       console.log('UPDATE_CALIBRATION_SAVE_DONE')
-       return Object.assign({}, state, {saveDisabled:true,save:1})
+       return Object.assign({}, state, {saveDisabled:true,save:1,calib_x:state.calib_x, calib_y:state.calib_y})
     }
+    
 
     default:
       return state

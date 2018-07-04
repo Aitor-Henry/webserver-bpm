@@ -4,7 +4,6 @@ import { Button, Alert, Glyphicon } from 'react-bootstrap';
 import { ListGroup,ListGroupItem } from 'react-bootstrap';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-//import { listClick } from '../actions/button.js'
 import {hideAlert} from '../actions/canvas.js'
 
 
@@ -12,7 +11,6 @@ class Infos extends React.Component {
   constructor(props) {
     super(props);
 
-    //this.listClick = this.listClick.bind(this);
     this.closeClicked= this.closeClicked.bind(this);
 
   }
@@ -65,9 +63,8 @@ function mapStateToProps(state) {
   };
 }
 
- function mapDispatchToProps(dispatch) { //On rend les action accessible a notre object react
+ function mapDispatchToProps(dispatch) {
   return {
-    //listClick: bindActionCreators(listClick, dispatch)
     hideAlert:bindActionCreators(hideAlert,dispatch)
 
   };

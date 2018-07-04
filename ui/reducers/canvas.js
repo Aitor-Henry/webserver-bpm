@@ -3,6 +3,7 @@ const initialState = {
   fwhmX :0,
   fwhmY :0,
   intensity :0,
+  intensityXY:0,
   bx :0,
   by :0,
   profileX : [],
@@ -35,13 +36,19 @@ export default function canvas(state = initialState, action) {
 
   switch (action.type) {
     case 'UPDATE_DATA' :
-    { //action.status.framenb
-      return Object.assign({}, state, {alertHidden:true, img_num : action.data.framenb, fwhmX: action.data.fwhm_x,fwhmY: action.data.fwhm_y, intensity : action.data.I, bx: action.data.X,by: action.data.Y, profileX : action.data.profile_x , profileY : action.data.profile_y })
+    {
+      return Object.assign({}, state, {alertHidden:true, intensityXY:action.data.intensity, img_num : action.data.framenb, fwhmX: action.data.fwhm_x,fwhmY: action.data.fwhm_y, intensity : action.data.I, bx: action.data.X,by: action.data.Y, profileX : action.data.profile_x , profileY : action.data.profile_y })
     }
 
+    /*case 'GET_INTENSITY' :
+    {
+      return Object.assign({}, state, {intensityXY:action.data.intensity})
+    }
+*/
     case 'SET_BEAM_MARK' :
     {
-      return Object.assign({}, state, {beam_markX:action.X, beam_markY:action.Y})
+      console.log(action.status.intensity)
+      return Object.assign({}, state, {intensityXY:action.status.intensity,beam_markX:action.X, beam_markY:action.Y})
     }
 
     case 'SET_ROI_MARK' :
@@ -75,7 +82,6 @@ export default function canvas(state = initialState, action) {
 
     case 'GET_STATUS_DONE' :
     {
-      //CALCULS ET TESTS A FAIRE
       if(action.status.roi==true){
         alert('ROI is already set, if you want an acquisition with full image reset ROI (throught button ROI -> Reset ROI or with lima), then restart webserver and actualize web browser.')
       }
@@ -86,22 +92,14 @@ export default function canvas(state = initialState, action) {
       }
       
     }
-    //beam_markX:action.status.beam_mark_x, beam_markY:action.status.beam_mark_y can't initialize them since they need dimensions in order to have the rights values
     
     case 'UPDATE_DIMENSIONS' :
     {
-      //CALCULS ET TESTS A FAIRE pour le ratio !
-      //if(state.beam_markX!=undefined && state.beam_markY!=undefined){
-      //  return Object.assign({}, state, {windowWidth:(action.windowHeight*0.54)*state.imageRatio,windowHeight:action.windowHeight*0.54,beam_markX:Math.round(action.windowHeight*state.imageRatio*0.54*state.beam_markX/state.windowWidth),beam_markY:Math.round(action.windowHeight*0.54*state.beam_markY/state.windowHeight)})
-      //} else {
-      //  return Object.assign({}, state, {windowWidth:(action.windowHeight*0.54)*state.imageRatio,windowHeight:action.windowHeight*0.54})
-      //}
       return Object.assign({}, state, {windowWidth:(action.windowHeight*0.54)*state.imageRatio,windowHeight:action.windowHeight*0.54})
     }
 
     case 'SWITCH_DIMENSIONS' :
     {
-      //CALCULS ET TESTS A FAIRE
       return Object.assign({}, state, {windowWidth:action.windowWidth,windowHeight:action.windowHeight}) //used in rotation
     }
 

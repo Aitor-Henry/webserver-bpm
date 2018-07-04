@@ -4,10 +4,6 @@ export function updateData(data){
 }
 
 
-export function setBeamMark(X,Y){
-  return { type: 'SET_BEAM_MARK',X,Y}
-}
-
 export function setROIMark(X,Y){
   return { type: 'SET_ROI_MARK',X,Y}
 }
@@ -17,8 +13,7 @@ export function setPrevROIMark(X,Y,W,H){
 }
 
 
-export function setROI(){ //actions qui va definir si les options temperature,autoscale et lut sont selectionne
-
+export function setROI(){
 
   return (dispatch,getState) => {
     const state = getState()
@@ -32,8 +27,8 @@ export function setROI(){ //actions qui va definir si les options temperature,au
             throw Error(response.statusText);
           }
           return response;
-        }) .then(response => dispatch(setROIDone())) //Si on a une reponse du server on execute getBeamPos
-          .catch(() => alert('Problem to set ROI, check console server'))//Sinon il ya un probleme
+        }) .then(response => dispatch(setROIDone()))
+          .catch(() => alert('Problem to set ROI, check console server'))
       }
   }
   
@@ -48,7 +43,7 @@ export function hideAlert(){
   return { type: 'HIDE_ALERT'}
 }
 
-export function resetRoi(){ //actions qui va definir si les options temperature,autoscale et lut sont selectionne
+export function resetRoi(){
 
   return (dispatch,getState) => {
     const state = getState()
@@ -58,8 +53,8 @@ export function resetRoi(){ //actions qui va definir si les options temperature,
           throw Error(response.statusText);
         }
         return response;
-      }) .then(response => dispatch(resetROIDone())) //Si on a une reponse du server on execute getBeamPos
-         .catch(() => alert('Problem to reset ROI, check console server'))//Sinon il ya un probleme
+      }) .then(response => dispatch(resetROIDone()))
+         .catch(() => alert('Problem to reset ROI, check console server'))
   }
 }
 
@@ -88,7 +83,30 @@ export function resetCrosshairDone(){
   return { type: 'RESET_CROSSHAIR'}
 }
 
-export function getStatus(windowWidth,windowHeight){ //actions qui va definir si les options temperature,autoscale et lut sont selectionne
+
+export function setBeamMark(X,Y){
+
+  return (dispatch,getState) => {
+    const state = getState()
+    console.log(X,Y)
+      fetch('/'+state.bpmState.client_id+'/api/get_intensity?x='+X+'&y='+Y)
+        .then((response) => {
+          if(!response.ok){
+            throw Error(response.statusText);
+          }
+          return response;
+        }).then(response => response.json())
+          .then(response => dispatch(setBeamMarkDone(X,Y,response)))
+          .catch(() => alert('Problem to set ROI, check console server'))
+  }
+  
+}
+
+export function setBeamMarkDone(X,Y,status){
+  return { type: 'SET_BEAM_MARK',X,Y,status}
+}
+
+export function getStatus(windowWidth,windowHeight){
   return (dispatch,getState) => {
     const state = getState()
     fetch('/'+state.bpmState.client_id+'/api/get_status?')
@@ -98,14 +116,34 @@ export function getStatus(windowWidth,windowHeight){ //actions qui va definir si
         }
         return response;
       }) .then(response => response.json())
-         .then(response => dispatch(getStatusDone(response,windowWidth,windowHeight))) //Si on a une reponse du server on execute getStatusDone
-         .catch(() => alert('Problem to get status, check console server'))//Sinon il ya un probleme
+         .then(response => dispatch(getStatusDone(response,windowWidth,windowHeight)))
+         .catch(() => alert('Problem to get status, check console server'))
   }
 }
 
 export function getStatusDone(status,windowWidth,windowHeight){
   return { type: 'GET_STATUS_DONE',status,windowWidth,windowHeight}
 }
+
+/*export function getIntensity(){
+  return (dispatch,getState) => {
+    const state = getState()
+    fetch('/'+state.bpmState.client_id+'/api/get_intensity?x='+state.canvas.beam_markX+'&y='+state.canvas.beam_markY)
+      .then((response) => {
+        if(!response.ok){
+          throw Error(response.statusText);
+        }
+        return response;
+      }) .then(response => response.json())
+         .then(response => dispatch(getIntensityDone(response)))
+         .catch(() => alert('Problem to get status, check console server'))
+  }
+}
+
+export function getIntensityDone(data){
+  console.log('GET_INTENSITY : ',data)
+  return { type: 'GET_INTENSITY', data}
+}*/
 
 export function updateDimensions(windowWidth,windowHeight){
   return { type: 'UPDATE_DIMENSIONS',windowWidth,windowHeight}

@@ -1,5 +1,5 @@
 //////////////////////////////////////////BUTTON////////////////////////////////////////////////////////
-export function setImgDisplay(){ //actions qui va definir si les options temperature,autoscale et lut sont selectionne
+export function setImgDisplay(){
 
   return (dispatch,getState) => {
     const state = getState()
@@ -10,59 +10,60 @@ export function setImgDisplay(){ //actions qui va definir si les options tempera
         }
 
         return response;
-      }) .then(response => dispatch(update_calibration_acquire())) //Si on a une reponse du server on execute getBeamPos
-         .catch(() => alert('Error, please check server console, setImgDisplay'))//Sinon il ya un probleme
+      }) .then(response => dispatch(update_calibration_acquire()))
+         .catch(() => alert('Error, please check server console, setImgDisplay'))
   }
 }
 
 
-export function update_calibration_acquire(){ //actions qui va definir si les options temperature,autoscale et lut sont selectionne
-
+export function update_calibration_acquire(){ // In case if the user doesn't save calibration before acquisition
   return (dispatch,getState) => {
     const state = getState()
-    fetch('/'+state.bpmState.client_id+'/api/update_calibration?x='+state.options.Xvalue+'&y='+state.options.Yvalue+'&save='+state.options.saveValue)
+    fetch('/'+state.bpmState.client_id+'/api/update_calibration?x='+state.options.calib_x+'&y='+state.options.calib_y)
       .then((response) => {
         if(!response.ok){
           throw Error(response.statusText);
         }
         return response;
-      }) .then(response => dispatch(getBeamPos())) //Si on a une reponse du server on execute getBeamPos
-         .catch(() => alert('Error, please check server console, update_calibration_acquire'))//Sinon il ya un probleme
+      }) .then(response => dispatch(getBeamPos())) 
+         .catch(() => alert('Error, please check server console, update_calibration_acquire'))
   }
 }
 
-export function update_calibration_apply(){ //actions qui va etre appeler des quon clique sur apply (differentre de update_calibration car elle nappelle pas getBeamPos)
+export function update_calibration_apply(){ // Set calibration in Bpm device
 
   return (dispatch,getState) => {
     const state = getState()
-    fetch('/'+state.bpmState.client_id+'/api/update_calibration?x='+state.options.Xvalue+'&y='+state.options.Yvalue+'&save='+0)
+    //fetch('/'+state.bpmState.client_id+'/api/update_calibration?x='+state.options.calib_x+'&y='+state.options.calib_y+'&save='+0)
+    fetch('/'+state.bpmState.client_id+'/api/update_calibration?x='+state.options.calib_x+'&y='+state.options.calib_y)
       .then((response) => {
         if(!response.ok){
           throw Error(response.statusText);
         }
         return response;
-      }) .then(response => dispatch(update_calibration_apply_done())) //Si on a une reponse du server on execute getBeamPos
-         .catch(() => alert('Error, please check server console, update_calibration_apply'))//Sinon il ya un probleme
+      }) .then(response => dispatch(update_calibration_apply_done()))
+         .catch(() => alert('Error, please check server console, update_calibration_apply'))
   }
 }
 
-export function update_calibration_save(){ //actions qui va etre appeler des quon clique sur apply (differentre de update_calibration car elle nappelle pas getBeamPos)
+/*
+export function update_calibration_save(){ // Return calibration saved in Bpm device and save it in web client
 
   return (dispatch,getState) => {
     const state = getState()
-    fetch('/'+state.bpmState.client_id+'/api/update_calibration?x='+state.options.Xvalue+'&y='+state.options.Yvalue+'&save='+0)
+    fetch('/'+state.bpmState.client_id+'/api/update_calibration?x='+state.options.calib_x+'&y='+state.options.calib_y+'&save='+1)
       .then((response) => {
         if(!response.ok){
           throw Error(response.statusText);
         }
         return response;
-      }) .then(response => dispatch(update_calibration_save_done())) //Si on a une reponse du server on execute getBeamPos
-         .catch(() => alert('Error, please check server console, update_calibration_save'))//Sinon il ya un probleme
+      }) .then(response => dispatch(update_calibration_save_done(response)))
+         .catch(() => alert('Error, please check server console, update_calibration_save'))
   }
 }
+*/
 
-
-export function getBeamPos(){ //actions qui va revoyer les infos des images de la cam
+export function getBeamPos(){
 
   return (dispatch,getState) => {
     const state = getState()
@@ -71,7 +72,6 @@ export function getBeamPos(){ //actions qui va revoyer les infos des images de l
         if(!response.ok){
           throw Error(response.statusText);
         }
-        //console.log("response",response)
         return response;
       }) .then(response => dispatch(buttonAcquirePressed()))
          .catch(() => alert('Error,impossible to getBeamPos, please check server console'))
@@ -84,19 +84,20 @@ export function buttonAcquirePressed(){
 }
 
 
-export function update_calibration_apply_done(){ //On informe le reducer qu'on a applique de nouveau parametre, il faut donc remettre save a 0
+export function update_calibration_apply_done(){
   return { type: 'UPDATE_CALIBRATION_APPLY_DONE'}
 }
 
-export function update_calibration_save_done(){ //On informe le reducer qu'on a applique de nouveau parametre, il faut donc remettre save a 1
-  return { type: 'UPDATE_CALIBRATION_SAVE_DONE'}
+/*
+export function update_calibration_save_done(status){
+  return { type: 'UPDATE_CALIBRATION_SAVE_DONE', status}
 }
+*/
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//////////////////////////////////////////textState//////////////////////////////////////////////////////// was in actions/options.js
+//////////////////////////////////////////textState/////////////////////////////////////////////////////
 
 export function textEnterExposure(text) { //enable est le booleen passe en parametre
-  console.log("exp_t : ", text)
   return { type: "TEXT_ENTER_EXPOSURE", text} //On informe le reducers qu'on est dans le cas d'un text non vide et on lui passe le texte
 }
 
@@ -112,7 +113,7 @@ export function textEmptySampling() { //enable est le booleen passe en parametre
   return { type: "TEXT_EMPTY_SAMPLING"} //On informe le reducers qu'on est dans le cas d'un text vide
 }
 
-export function textEnterX(text) { //enable est le booleen passe en parametre
+export function textEnterCalib_X(text) { //enable est le booleen passe en parametre
   return { type: "TEXT_ENTER_X", text} //On informe le reducers qu'on est dans le cas d'un text non vide et on lui passe le texte
 }
 
@@ -120,7 +121,7 @@ export function textEmptyX() { //enable est le booleen passe en parametre
   return { type: "TEXT_EMPTY_X"} //On informe le reducers qu'on est dans le cas d'un text vide
 }
 
-export function textEnterY(text) { //enable est le booleen passe en parametre
+export function textEnterCalib_Y(text) { //enable est le booleen passe en parametre
   return { type: "TEXT_ENTER_Y", text} //On informe le reducers qu'on est dans le cas d'un text non vide et on lui passe le texte
 }
 

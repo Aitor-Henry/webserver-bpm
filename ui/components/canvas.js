@@ -1,7 +1,6 @@
 import React from 'react';
 import ReactDom from 'react-dom'
 import { connect } from 'react-redux';
-{/*import { Image } from 'react-bootstrap';*/}
 import { bindActionCreators } from 'redux';
 import {updateData,setBeamMark,setROIMark,setPrevROIMark,setROI,updateDimensions, resetCrosshair} from '../actions/canvas.js'
 
@@ -58,7 +57,7 @@ class Canvas extends React.Component {
     
   }
 
-  componentWillUnmount(){ //On ferme la socket dont on a recupere la src puis on en ouvre une nouvelle pour les prochaines images
+  componentWillUnmount(){
     window.removeEventListener("resize", this.updateDimensions.bind(this));
   }
     
@@ -72,20 +71,19 @@ class Canvas extends React.Component {
 
     this.image.onload = () => {
       ctx.save();
-      //ctx.clearRect(0,0,this.refs.myCanvas.width,this.refs.myCanvas.height)
 
-      if(this.props.rotation === 90 || this.props.rotation === 270){ //Si il y a une rotation on change de repere on dessine et on revient dans le repere initial
+      if(this.props.rotation === 90 || this.props.rotation === 270){
         ctx.translate(this.props.windowWidth/2,this.props.windowHeight/2);
         ctx.rotate(this.props.rotation * Math.PI / 180);
-        ctx.drawImage(this.image, -this.props.windowHeight/2, -this.props.windowWidth/2,this.props.windowHeight,this.props.windowWidth); //On dessine l'image
+        ctx.drawImage(this.image, -this.props.windowHeight/2, -this.props.windowWidth/2,this.props.windowHeight,this.props.windowWidth);
       }
       else if(this.props.rotation === 180){
         ctx.translate(this.props.windowWidth/2,this.props.windowHeight/2);
         ctx.rotate(this.props.rotation * Math.PI / 180);
-        ctx.drawImage(this.image, -this.props.windowWidth/2, -this.props.windowHeight/2,this.props.windowWidth,this.props.windowHeight); //On dessine l'image
+        ctx.drawImage(this.image, -this.props.windowWidth/2, -this.props.windowHeight/2,this.props.windowWidth,this.props.windowHeight);
       }
       else{ //sinon on dessine juste l'image
-        ctx.drawImage(this.image, 0, 0,this.props.windowWidth,this.props.windowHeight); //On dessine l'image
+        ctx.drawImage(this.image, 0, 0,this.props.windowWidth,this.props.windowHeight);
       }
       if(this.props.beam_markX != undefined && this.props.beam_markY != undefined && !this.props.activeROI && this.props.rotation === 0){
         ctx.strokeStyle = "#ef0000" //red
@@ -98,6 +96,10 @@ class Canvas extends React.Component {
         ctx.moveTo(this.props.beam_markX*this.props.windowWidth/this.props.imageMaxWidth, 0);
         ctx.lineTo(this.props.beam_markX*this.props.windowWidth/this.props.imageMaxWidth, this.props.windowHeight);
         ctx.stroke();
+        ctx.font = '10px Arial'
+        ctx.strokeText("x="+this.props.beam_markX+", y="+this.props.beam_markY,(this.props.beam_markX*this.props.windowWidth/this.props.imageMaxWidth)+5, (this.props.beam_markY*this.props.windowHeight/this.props.imageMaxHeight)-5);
+        //this.props.getIntensity(); Need to see how we can get intensity without calling 
+        ctx.strokeText("I="+this.props.intensityXY,(this.props.beam_markX*this.props.windowWidth/this.props.imageMaxWidth)+5, (this.props.beam_markY*this.props.windowHeight/this.props.imageMaxHeight)+10)
         ctx.closePath();
       } else {
         if(this.props.beam_markX != undefined && this.props.beam_markY != undefined){ // in order to execute it only once, 
@@ -107,13 +109,25 @@ class Canvas extends React.Component {
       if(this.props.start_X != undefined && this.props.start_Y != undefined && this.props.rotation===0){
         this.draw_ROI_Marker()
       }
+      if(this.props.bx>0 && this.props.by>0){
+        ctx.strokeStyle = "#00ff00" //green
+        ctx.font = '15px Arial'
+        ctx.fillStyle = "#00ff00"
+        ctx.beginPath();
+        ctx.moveTo(0, this.props.by*this.props.windowHeight/this.props.imageMaxHeight);
+        ctx.lineTo(this.props.windowWidth, this.props.by*this.props.windowHeight/this.props.imageMaxHeight);
+        ctx.stroke();
+        ctx.moveTo(this.props.bx*this.props.windowWidth/this.props.imageMaxWidth, 0);
+        ctx.lineTo(this.props.bx*this.props.windowWidth/this.props.imageMaxWidth, this.props.windowHeight);
+        ctx.stroke();
+        ctx.closePath();
+      }
       ctx.restore();
     }
     if(this.liveState === true){
       this.closeSocket();
     }
     this.image.src = "data:image/jpg;base64,"+src;
-    //this.state.imageSrc = "";
   }
 
   handleMouseDown(e){
@@ -121,7 +135,6 @@ class Canvas extends React.Component {
       console.log('Mousedown')
       this.refs.myCanvas.style.cursor = "crosshair"
       this.drawing = true;
-      //this.props.setROIMark(e.nativeEvent.offsetX - this.refs.myCanvas.offsetLeft,e.nativeEvent.offsetY - this.refs.myCanvas.offsetTop)
       this.props.setROIMark(e.nativeEvent.offsetX,e.nativeEvent.offsetY)
     }
   }
@@ -151,8 +164,8 @@ class Canvas extends React.Component {
     const ctx = this.refs.myCanvas.getContext('2d');
     
 
-    if(!this.props.activeROI){//On dessine que si l'utilisateur est pas en train de roi
-      if(e != undefined){ //Quand on clique sur l'image
+    if(!this.props.activeROI){
+      if(e != undefined){
         if((this.props.beam_markX != e.nativeEvent.offsetX*this.props.imageMaxWidth/this.props.windowWidth || this.props.beam_markY != e.nativeEvent.offsetY*this.props.imageMaxHeight/this.props.windowHeight) && this.props.crosshair === 0 && this.props.rotation===0){ 
           this.props.setBeamMark(Math.round(e.nativeEvent.offsetX*this.props.imageMaxWidth/this.props.windowWidth),Math.round(e.nativeEvent.offsetY*this.props.imageMaxHeight/this.props.windowHeight));
         }
@@ -161,7 +174,7 @@ class Canvas extends React.Component {
       else if(this.props.activeROI){
         this.drawing = false;
         this.refs.myCanvas.style.cursor = "default";
-        this.props.setROI(); //On envoi au serveur le roi etablie
+        this.props.setROI();
       }
   }
 
@@ -176,15 +189,15 @@ class Canvas extends React.Component {
   }
 
   registerChannel(){
-    if (this.img_socket === null) { //Si une socket n'est pas deja active
+    if (this.img_socket === null) {
       let ws_address;
       if (window.location.port != "") {
-        ws_address = "ws://"+window.location.hostname+":"+window.location.port+"/"+this.props.client_id+"/api/image_channel"; //"ws://localhost:8066/api/image_channel";
+        ws_address = "ws://"+window.location.hostname+":"+window.location.port+"/"+this.props.client_id+"/api/image_channel";
       } else {
-        ws_address = "ws://"+window.location.hostname+"/"+this.props.client_id+"/api/image_channel"; //"ws://"+window.location.hostname+"/api/image_channel"
+        ws_address = "ws://"+window.location.hostname+"/"+this.props.client_id+"/api/image_channel";
       }
 
-      this.img_socket = new WebSocket(ws_address); //on creer la socket
+      this.img_socket = new WebSocket(ws_address);
       if(this.liveState==true){
         this.img_socket.onopen = () => {
           this.Askimage();
@@ -204,13 +217,16 @@ class Canvas extends React.Component {
   
   Askimage(){    
     if (this.img_socket != null){
-      this.img_socket.send(this.props.client_id);
+      if(this.props.beam_markY!=undefined && this.props.beam_markX!=undefined){
+        this.img_socket.send(JSON.stringify([this.props.beam_markX,this.props.beam_markY]));
+      }else{
+        this.img_socket.send(false);
+      }
     }
-    this.img_socket.onmessage = (packed_msg) => { //des que la socket recoit un message du serveur (elle reste en attente sinon )
-      this.setState({imageSrc: JSON.parse(packed_msg.data).jpegData}); //On met a jour la source d limg qui corrspond a la derniere image recu
+    this.img_socket.onmessage = (packed_msg) => {
+      this.setState({imageSrc: JSON.parse(packed_msg.data).jpegData});
       this.updateData(JSON.parse(packed_msg.data));
     }
-    
   }
 
 
@@ -244,10 +260,13 @@ function mapStateToProps(state) {
     liveRun:state.options.liveRun,
     acqImage:state.options.acqImage,
     exp_t:state.options.exposureTimeValue,
+    intensityXY:state.canvas.intensityXY,
+    bx:state.canvas.bx,
+    by:state.canvas.by,
   };
 }
 
-function mapDispatchToProps(dispatch) { //On rend les actions accessible a notre object react
+function mapDispatchToProps(dispatch) {
   return {
     updateData : bindActionCreators(updateData, dispatch),
     setBeamMark : bindActionCreators(setBeamMark, dispatch),
@@ -255,7 +274,7 @@ function mapDispatchToProps(dispatch) { //On rend les actions accessible a notre
     setPrevROIMark : bindActionCreators(setPrevROIMark, dispatch),
     setROI: bindActionCreators(setROI, dispatch),
     updateDimensions:bindActionCreators(updateDimensions, dispatch),
-
+    //getIntensity:bindActionCreators(getIntensity, dispatch),
     resetCrosshair: bindActionCreators(resetCrosshair, dispatch),
   };
 }

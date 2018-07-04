@@ -20,7 +20,6 @@ export default function video(state = initialState, action) {
 
     case 'GET_STATUS_DONE':
     {
-      console.log(action.status.background)
       if(action.status.background===true){
         alert('A background is already set, you can reset it by clicking on the \'Bkgnd\' button')
         return Object.assign({}, state, {backgroundstate: 0, activeBkgnd:true})

@@ -3,7 +3,7 @@ import ReactDom from 'react-dom';
 import { Navbar,Nav,NavItem,NavDropdown,MenuItem,Form,FormGroup,FormControl,Col,ControlLabel,Button,Glyphicon,DropdownButton,} from 'react-bootstrap';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import {buttonAcquirePressed,textEnterExposure,textEnterSampling,textEmptyExposure,textEmptySampling,liveChecked,textEnterX,textEnterY,textEmptyX,textEmptyY,getBeamPos,setImgDisplay,update_calibration_apply,update_calibration_save } from '../actions/options.js'
+import {buttonAcquirePressed,textEnterExposure,textEnterSampling,textEmptyExposure,textEmptySampling,liveChecked,textEnterCalib_X,textEnterCalib_Y,textEmptyX,textEmptyY,getBeamPos,setImgDisplay,update_calibration_apply,update_calibration_save } from '../actions/options.js'
 import Dropdown from '../components/dropdown.js'
 
 class Options extends React.Component {
@@ -13,10 +13,10 @@ class Options extends React.Component {
     this.textStateExposure = this.textStateExposure.bind(this);
     this.textStateSampling = this.textStateSampling.bind(this);
     this.liveChecked = this.liveChecked.bind(this);
-    this.textStateX = this.textStateX.bind(this);
-    this.textStateY = this.textStateY.bind(this);
+    this.textStateCalib_x = this.textStateCalib_x.bind(this);
+    this.textStateCalib_y = this.textStateCalib_y.bind(this);
     this.apply = this.apply.bind(this);
-    this.save = this.save.bind(this);
+    //this.save = this.save.bind(this);
 
   }
 
@@ -46,13 +46,10 @@ class Options extends React.Component {
     }
   }
 
-  textStateX(){
-
-    {/*console.log(ReactDom.findDOMNode(this.refs.x).value)*/}
-    {/*console.log(this.props.Xvalue)*/}
+  textStateCalib_x(){
 
     if(ReactDom.findDOMNode(this.refs.x).value > 0 ){
-      this.props.textEnterX(ReactDom.findDOMNode(this.refs.x).value);
+      this.props.textEnterCalib_X(ReactDom.findDOMNode(this.refs.x).value);
     }
     else{
       this.props.textEmptyX(); //Sinon on appel l'action textEmpty
@@ -60,12 +57,10 @@ class Options extends React.Component {
   }
 
 
-  textStateY(){
-
-    {/*console.log(ReactDom.findDOMNode(this.refs.y).value,this.props.Yvalue)*/}
+  textStateCalib_y(){
 
     if(ReactDom.findDOMNode(this.refs.y).value > 0 ){
-      this.props.textEnterY(ReactDom.findDOMNode(this.refs.y).value);
+      this.props.textEnterCalib_Y(ReactDom.findDOMNode(this.refs.y).value);
     }
     else{
       this.props.textEmptyY(); //Sinon on appel l'action textEmpty
@@ -73,7 +68,7 @@ class Options extends React.Component {
   }
 
   buttonAcquirePressed(){
-    this.props.setImgDisplay();
+    this.props.setImgDisplay(this.props.beam_markX,this.props.beam_markY);
   }
 
 
@@ -87,10 +82,11 @@ class Options extends React.Component {
     this.props.update_calibration_apply();
   }
 
-
+/*
   save(){
     this.props.update_calibration_save();
   }
+*/
 
   render(){
     return (
@@ -108,7 +104,6 @@ class Options extends React.Component {
           <div className="col-md-2"></div>
           <div className="col-md-4">
           <input type="checkbox" onChange={this.liveChecked} checked={this.props.liveCheckedBool === 1} disabled={this.props.liveRun === 1} />
-          {/*<input type="checkbox" onChange={this.liveChecked} disabled={this.props.liveRun === 1} />*/}
           <Col componentClass={ControlLabel} sm={13}>Live</Col>
           </div>
         </div>
@@ -131,17 +126,17 @@ class Options extends React.Component {
             <Form horizontal>
               <FormGroup controlId="formHorizontalPixelSizeX">
                 <Col componentClass={ControlLabel} sm={2}>X: </Col>
-                <Col sm={8}><FormControl type="number" ref='x' value={this.props.Xvalue} onChange={this.textStateX} placeholder="Value required" readOnly={this.props.liveRun === 1}/></Col>
+                <Col sm={8}><FormControl type="number" ref='x' value={this.props.calib_x} onChange={this.textStateCalib_x} placeholder="Value required" readOnly={this.props.liveRun === 1}/></Col>
               </FormGroup>
               <FormGroup controlId="formHorizontalPixelSizeY">
                 <Col componentClass={ControlLabel} sm={2}>Y: </Col>
-                <Col sm={8}><FormControl type="number" ref='y' value={this.props.Yvalue} onChange={this.textStateY} placeholder="Value required" readOnly={this.props.liveRun === 1}/></Col>
+                <Col sm={8}><FormControl type="number" ref='y' value={this.props.calib_y} onChange={this.textStateCalib_y} placeholder="Value required" readOnly={this.props.liveRun === 1}/></Col>
               </FormGroup>
             </Form>
             <MenuItem divider />
             <Button disabled={this.props.applyDisabled || this.props.liveRun === 1 } onClick={this.apply} >Apply</Button>
             {" "}
-            <Button disabled={this.props.saveDisabled || this.props.liveRun === 1} onClick={this.save} >Save</Button>
+            {/*<Button disabled={this.props.saveDisabled || this.props.liveRun === 1} onClick={this.save} >Get Calibration</Button>*/}
           </Dropdown>
           </div>
         </div>
@@ -160,13 +155,15 @@ function mapStateToProps(state) {
     exposureTimeValue: state.options.exposureTimeValue,
     samplingRateValue: state.options.samplingRateValue,
     liveCheckedBool:state.options.liveCheckedBool,
-    Xvalue: state.options.Xvalue,
-    Yvalue: state.options.Yvalue,
+    calib_x: state.options.calib_x,
+    calib_y: state.options.calib_y,
     applyDisabled:state.options.applyDisabled,
-    saveDisabled:state.options.saveDisabled,
+    //saveDisabled:state.options.saveDisabled,
     liveRun: state.options.liveRun,
-    saveValue: state.options.saveValue,
 
+    //TEST
+    beam_markX:state.canvas.beam_markX,
+    beam_markY:state.canvas.beam_markY,
   };
 }
 
@@ -178,15 +175,14 @@ function mapDispatchToProps(dispatch) { //On rend les action accessible a notre 
     textEmptyExposure: bindActionCreators(textEmptyExposure, dispatch),
     textEmptySampling: bindActionCreators(textEmptySampling, dispatch),
     liveChecked:bindActionCreators(liveChecked, dispatch),
-    textEnterX:bindActionCreators(textEnterX, dispatch),
-    textEnterY:bindActionCreators(textEnterY, dispatch),
+    textEnterCalib_X:bindActionCreators(textEnterCalib_X, dispatch),
+    textEnterCalib_Y:bindActionCreators(textEnterCalib_Y, dispatch),
     textEmptyX:bindActionCreators(textEmptyX, dispatch),
-    textEnterY:bindActionCreators(textEnterY, dispatch),
     textEmptyY:bindActionCreators(textEmptyY, dispatch),
     getBeamPos:bindActionCreators(getBeamPos,dispatch),
     setImgDisplay:bindActionCreators(setImgDisplay,dispatch),
     update_calibration_apply : bindActionCreators(update_calibration_apply,dispatch),
-    update_calibration_save : bindActionCreators(update_calibration_save,dispatch),
+    //update_calibration_save : bindActionCreators(update_calibration_save,dispatch),
 
   };
 }
