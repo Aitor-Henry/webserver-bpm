@@ -23,7 +23,7 @@ class NavBar extends React.Component {
         <Navbar inverse fluid>
           <Navbar.Header>
             <Navbar.Brand>
-              <LinkContainer to={'/bcu_basler/'} onClick={this.getStatus(window.innerWidth,window.innerHeight)}><NavItem>{this.props.client_id}</NavItem></LinkContainer>
+              <LinkContainer to={'/'+this.props.client_id+'/'} onClick={this.getStatus(window.innerWidth,window.innerHeight)}><NavItem>{this.props.client_id}</NavItem></LinkContainer>
             </Navbar.Brand>
           </Navbar.Header>
       </Navbar>

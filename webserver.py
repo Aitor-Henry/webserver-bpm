@@ -17,15 +17,10 @@ except ImportError:
     os.environ["QUB_SUBPATH"]="qt4"
     from Qub.CTools import pixmaptools
 import logging
-import sys
-
-import copy
-
-HOMEPAGE_TITLE = "BPM Monitor"
-HOST = socket.gethostname()
-PORT=8066 #defined arbitrarly
-WEB_QUERIES = gevent.queue.Queue()
-
+#import sys
+#import copy
+from threading import Thread
+ 
 
 # patch socket module
 socket.socket._bind = socket.socket.bind
@@ -38,20 +33,39 @@ def my_socket_bind(self, *args, **kwargs):
 
 socket.socket.bind = my_socket_bind
 
-#Class BV
-class BV:
 
-  def __init__(self,camera_name):
+HOMEPAGE_TITLE = "BPM Monitor"
+HOST = socket.gethostname()
+PORT=8066 #defined arbitrarly
+WEB_QUERIES = gevent.queue.Queue()
+NEW_CAMERA = gevent.queue.Queue()
+
+
+#Class BV
+class BV():
+
+  def __init__(self):
     self.bvdata = None
-    print "camera name : ", camera_name
-    tango_device = self.find_tango_device(camera_name)
-    self.limaccds_device = PyTango.DeviceProxy(tango_device)
-    self.bpm_device = PyTango.DeviceProxy(self.limaccds_device.getPluginDeviceNameFromType('bpm'))
-    self.bpm_device.Start()
+    self.cameras_running = {}
+    
     self.event_counter = 0
-    self.bpm_device.subscribe_event('bvdata', PyTango.EventType.CHANGE_EVENT, self.handle_new_image, [])
     self.handle_webserver_queries()
     
+  def camera_init(self, camera_name):
+    bvdata=None
+    if self.cameras_running.has_key(camera_name):
+      return True
+    else:
+      self.event_counter = 0
+      tango_device = self.find_tango_device(camera_name)
+      limaccds_device = PyTango.DeviceProxy(tango_device)
+      bpm_device = PyTango.DeviceProxy(limaccds_device.getPluginDeviceNameFromType('bpm'))
+      bpm_device.Start()
+      bpm_device.subscribe_event('bvdata', PyTango.EventType.CHANGE_EVENT, self.handle_new_image, [])
+      dict_to_add = {camera_name : [limaccds_device, bpm_device, bvdata]}
+      self.cameras_running.update(dict_to_add)
+      print self.cameras_running
+      return False
 
   def find_tango_device(self,lima_name):
     tango_db = PyTango.DeviceProxy("sys/database/2")
@@ -68,7 +82,9 @@ class BV:
         for i in range(0,len(list_int_clean)):
             list_tuples_int.append(int(list_int_clean[i]))
         return list_tuples_int
-
+    
+    camera_name=evt_bvdata.attr_name.split("/")[-2]
+    print camera_name, type(camera_name)
     if self.event_counter==0:
       print("Synchronous event with bpm device.")
       return None
@@ -82,40 +98,38 @@ class BV:
       profile_x=ListStrToListInt(list_int_profile_x)
       profile_y=ListStrToListInt(list_int_profile_y)
       result_array = {"framenb" : framenb, "X" : X, "Y" : Y, "I" : I, "fwhm_x" : fwhm_x, "fwhm_y" : fwhm_y,  "jpegData" : jpegData, "profile_x" : profile_x, "profile_y" : profile_y}
-      self.bvdata = result_array
+      self.cameras_running[camera_name][2] = result_array
       
 
   #methods
-  def getExposuretime(self):
-    return self.limaccds_device.acq_expo_time
+  def getExposuretime(self,camera_name):
+    return self.cameras_running[camera_name][0].acq_expo_time
 
-  def getAcqRate(self):
-    return (1.0/(self.limaccds_device.acq_expo_time+self.limaccds_device.latency_time))
+  def getAcqRate(self,camera_name):
+    return (1.0/(self.cameras_running[camera_name][0].acq_expo_time+self.cameras_running[camera_name][0].latency_time))
 
-  def setAcqRate(self, acqrate):
+  def setAcqRate(self, acqrate,camera_name):
     acqrate_sec = 1.0/acqrate
-    if acqrate_sec>=self.limaccds_device.acq_expo_time:
-      self.limaccds_device.latency_time=acqrate_sec-self.limaccds_device.acq_expo_time
+    if acqrate_sec>=self.cameras_running[camera_name][0].acq_expo_time:
+      self.cameras_running[camera_name][0].latency_time=acqrate_sec-self.cameras_running[camera_name][0].acq_expo_time
 
-  def setExposuretime(self,exp_t):
-    self.limaccds_device.acq_expo_time = exp_t
+  def setExposuretime(self,exp_t,camera_name):
+    self.cameras_running[camera_name][0].acq_expo_time = exp_t
 
 
-  def getAcqStatus(self):
-    return self.limaccds_device.acq_status
+  def getAcqStatus(self,camera_name):
+    return self.cameras_running[camera_name][0].acq_status
 
-  def HasRoi(self):
-    img_dim = self.limaccds_device.image_roi
-    img_width, img_height = self.getDimensionImage()
+  def HasRoi(self,camera_name):
+    img_dim = self.cameras_running[camera_name][0].image_roi
+    img_width, img_height = self.getDimensionImage(camera_name)
     if img_dim[0]==0 and img_dim[1]==0 and img_dim[2]==img_width and img_dim[3]==img_height:
       return False
     else:
       return True
     
-  def getDimensionImage(self):
-    return (self.limaccds_device.image_width,self.limaccds_device.image_height)
-
-  
+  def getDimensionImage(self,camera_name):
+    return (self.cameras_running[camera_name][0].image_width,self.cameras_running[camera_name][0].image_height)
 
     
   def handle_webserver_queries(self):
@@ -124,39 +138,41 @@ class BV:
       query = get_query()
       print "------------------------NEXT QUERY-----------------------"
       print query
+      self.camera_init(query["camera_name"])
 
       if query["query"] == "new_image":
-        while self.bvdata == None:
-          time.sleep(self.getExposuretime()/10) #need to wait bpm return bvdata
-        query["reply"].update(self.bvdata)
-        if query["intensity"]!=False:
-          x_int=int(query["intensity"].split(",")[0][1:])
-          y_int=int(query["intensity"].split(",")[1][:-1])
-          query["reply"].update({"intensity": self.bpm_device.GetPixelIntensity([x_int,y_int])})
+        while self.cameras_running[query["camera_name"]][2] == None:
+          time.sleep(self.getExposuretime(query["camera_name"])/10) #need to wait bpm return bvdata
+        print "OK GOT IT : ", time.time()
+        query["reply"].update(self.cameras_running[query["camera_name"]][2])
+        if query["intensity"]==True:
+          x_int=int(query["bm_x"])
+          y_int=int(query["bm_y"])
+          query["reply"].update({"intensity": self.cameras_running[query["camera_name"]][1].GetPixelIntensity([x_int,y_int])})
         else:
           query["reply"].update({"intensity": -1})
         query["event"].set()
-        self.bvdata = None
+        self.cameras_running[query["camera_name"]][2] = None
 
       elif query["query"] == "get_status":
-          query["reply"].update({ "exposure_time": self.getExposuretime(),
-                                  "live": True if self.getAcqStatus()=='Running' else False,
-                                  "roi": self.HasRoi(),
-                                  "full_width": self.getDimensionImage()[0],
-                                  "full_height": self.getDimensionImage()[1],
-                                  "acq_rate": self.getAcqRate(),
-                                  "color_map": self.bpm_device.color_map, 
-                                  "autoscale": self.bpm_device.autoscale,
-                                  "calib_x": self.bpm_device.calibration[0],
-                                  "calib_y":  self.bpm_device.calibration[1],
-                                  "background": self.bpm_device.HasBackground(),
-                                  "beam_mark_x": float(self.bpm_device.beammark[0]),
-                                  "beam_mark_y": float(self.bpm_device.beammark[1])})
+          query["reply"].update({ "exposure_time": self.getExposuretime(query["camera_name"]),
+                                  "live": True if self.getAcqStatus(query["camera_name"])=='Running' else False,
+                                  "roi": self.HasRoi(query["camera_name"]),
+                                  "full_width": self.getDimensionImage(query["camera_name"])[0],
+                                  "full_height": self.getDimensionImage(query["camera_name"])[1],
+                                  "acq_rate": self.getAcqRate(query["camera_name"]),
+                                  "color_map": self.cameras_running[query["camera_name"]][1].color_map, 
+                                  "autoscale": self.cameras_running[query["camera_name"]][1].autoscale,
+                                  "calib_x": self.cameras_running[query["camera_name"]][1].calibration[0],
+                                  "calib_y":  self.cameras_running[query["camera_name"]][1].calibration[1],
+                                  "background": self.cameras_running[query["camera_name"]][1].HasBackground(),
+                                  "beam_mark_x": float(self.cameras_running[query["camera_name"]][1].beammark[0]),
+                                  "beam_mark_y": float(self.cameras_running[query["camera_name"]][1].beammark[1])})
           query["event"].set()
 
       elif query["query"] == "set_roi":
           try:
-             self.limaccds_device.image_roi = (query["x"],query["y"],query["w"],query["h"]) # is args in the good order ?
+             self.cameras_running[query["camera_name"]][0].image_roi = (query["x"],query["y"],query["w"],query["h"]) # is args in the good order ?
           except:
             logging.exception("Could not set roi")
           else:
@@ -164,54 +180,53 @@ class BV:
           query["event"].set()
 
       elif query["query"] == "set_img_display_config":
-          self.bpm_device.color_map = bool(int(query["color_map"]))
-          self.bpm_device.autoscale = bool(int(query["autoscale"]))
+          self.cameras_running[query["camera_name"]][1].color_map = bool(int(query["color_map"]))
+          self.cameras_running[query["camera_name"]][1].autoscale = bool(int(query["autoscale"]))
           if query["lut_method"] == "Logarithmic":
-            self.bpm_device.lut_method = "LOG"
+            self.cameras_running[query["camera_name"]][1].lut_method = "LOG"
           else:
-            self.bpm_device.lut_method = "LINEAR"
+            self.cameras_running[query["camera_name"]][1].lut_method = "LINEAR"
           query["event"].set()
 
       elif query["query"] == "update_calibration":
-        self.bpm_device.calibration = ([float(query["calib_x"]), float(query["calib_y"])])
+        self.cameras_running[query["camera_name"]][1].calibration = ([float(query["calib_x"]), float(query["calib_y"])])
         query["event"].set()
 
       elif query["query"] == "lock_beam_mark":
-        self.bpm_device.beammark = ([int(query["x"]), int(query["y"])])
+        self.cameras_running[query["camera_name"]][1].beammark = ([int(query["x"]), int(query["y"])])
         query["event"].set()
 
       elif query["query"] == "get_beam_position":
-        self.setExposuretime(float(query["exp_t"]))
-        self.setAcqRate(float(query["acq_rate"]))
-        if self.limaccds_device.ready_for_next_image==False:
+        self.setExposuretime(float(query["exp_t"]),query["camera_name"])
+        self.setAcqRate(float(query["acq_rate"]),query["camera_name"])
+        if self.cameras_running[query["camera_name"]][0].ready_for_next_image==False:
           print "stopping live"
-          self.limaccds_device.video_live=False
-          self.limaccds_device.stopAcq()
+          self.cameras_running[query["camera_name"]][0].video_live=False
+          self.cameras_running[query["camera_name"]][0].stopAcq()
         if bool(int(query["live"])):
-          self.limaccds_device.video_live=True
+          self.cameras_running[query["camera_name"]][0].video_live=True
         else:
-          self.limaccds_device.acq_nb_frames = 1
-          self.limaccds_device.prepareAcq()
-          self.limaccds_device.startAcq()
+          self.cameras_running[query["camera_name"]][0].acq_nb_frames = 1
+          self.cameras_running[query["camera_name"]][0].prepareAcq()
+          self.cameras_running[query["camera_name"]][0].startAcq()
         query["event"].set()
 
       elif query["query"] == "get_intensity":
         x = int(query["x"]); y = int(query["y"])
-        query["reply"].update({ "intensity": self.bpm_device.GetPixelIntensity([x,y]) })
+        query["reply"].update({ "intensity": self.cameras_running[query["camera_name"]][1].GetPixelIntensity([x,y]) })
         query["event"].set()
 
       elif query["query"] == "set_background":
           if int(query["backgroundstate"]): # if bool(int(query["set"])) ??
-            if self.getAcqStatus()=='Running':
+            if self.getAcqStatus(query["camera_name"])=='Running':
               raise RuntimeError, "Acquisition has not finished (or Live mode is on)"
             else:
-              self.bpm_device.TakeBackground() # same stuff, need to see how to handle this.
+              self.cameras_running[query["camera_name"]][1].TakeBackground() # same stuff, need to see how to handle this.
           else:
-            self.bpm_device.ResetBackground()
+            self.cameras_running[query["camera_name"]][1].ResetBackground()
           query["event"].set()
 
 
-# issue with background and (max_width, max_height), device server tango ? Lima.core.bpm ... lima.core.BACKGROUNDSUBSTRACTION ... ?
 
 def get_query():
     global WEB_QUERIES
@@ -235,12 +250,28 @@ def query(name, **kwargs):
 
 
 
-def webserver_main(portnumber, hostname):
-  #webserver_thread = gevent.spawn(bottle.run, host=hostname, port=portnumber, quiet=True)
-  #webserver_thread.port = portnumber
-  print("Init webserver ........ ", hostname, portnumber)
+def webserver_main(hostname,portnumber):
   bottle.run(server=GeventWebSocketServer, host=hostname, port=portnumber)
-  #return webserver_thread
+
+
+  """
+  global NEW_CAMERA
+  if NEW_CAMERA is None:
+    NEW_CAMERA = gevent.queue.Queue()
+  print("Init webserver ........ ")
+  threads = []
+  while True:
+    print "wait for new camera"
+    camera_name = NEW_CAMERA.get()
+    print "Camera name sent : ", camera_name
+    new_thread = BV(camera_name)
+    new_thread.start()
+    threads.append(new_thread)
+    print "cameras launch : ", threads
+
+  #server_thread.start()"""
+  
+
 
 
 @bottle.route("/")
@@ -278,19 +309,23 @@ def server_static(filename):
 
 @bottle.route("/:camera/")
 def get_camera_page(camera):
-  #Still problem here
-  gevent.spawn(BV, camera)
+  
+  """global NEW_CAMERA
+  if NEW_CAMERA is None:
+    NEW_CAMERA = gevent.queue.Queue()
+  NEW_CAMERA.put(camera)"""
   return bottle.static_file("index.html", root=os.path.dirname(os.path.abspath(__file__)))
 
 
 ########--------------------------------------------------------------------------------------########
 @bottle.get('/:camera/api/get_status')
 def get_status(camera):
-  return query("get_status")
+  return query("get_status", camera_name=bottle.request.GET["camera_name"])
 
 @bottle.get("/:camera/api/set_roi")
 def set_roi(camera):
-  res = query("set_roi",  x=int(bottle.request.GET["x"]),
+  res = query("set_roi",  camera_name=bottle.request.GET["camera_name"],
+                          x=int(bottle.request.GET["x"]),
                           y=int(bottle.request.GET["y"]),
                           w=int(bottle.request.GET["w"]),
                           h=int(bottle.request.GET["h"]))
@@ -298,45 +333,54 @@ def set_roi(camera):
 
 @bottle.get("/:camera/api/get_beam_position")
 def acquire(camera):
-  return query("get_beam_position", exp_t=bottle.request.GET["exp_t"],
+  return query("get_beam_position", camera_name=bottle.request.GET["camera_name"],
+                                    exp_t=bottle.request.GET["exp_t"],
                                     live = bottle.request.GET["live"],
                                     acq_rate = bottle.request.GET["acq_rate"])
 
 @bottle.get("/:camera/api/img_display_config")
 def set_img_display_config(camera):
-  return query("set_img_display_config", autoscale=bottle.request.GET["autoscale"],
-                                         color_map=bottle.request.GET["color_map"],
-                                         lut_method=bottle.request.GET["autoscale_option"])
+  return query("set_img_display_config",  camera_name=bottle.request.GET["camera_name"],
+                                          autoscale=bottle.request.GET["autoscale"],
+                                          color_map=bottle.request.GET["color_map"],
+                                          lut_method=bottle.request.GET["autoscale_option"])
 
 @bottle.get("/:camera/api/update_calibration")
 def update_calib(camera):
-  return query("update_calibration", calib_x=bottle.request.GET["x"],
+  return query("update_calibration", camera_name=bottle.request.GET["camera_name"],
+                                     calib_x=bottle.request.GET["x"],
                                      calib_y=bottle.request.GET["y"])
 
 @bottle.get("/:camera/api/lock_beam_mark")
 def lock_beam_mark(camera):
-  return query("lock_beam_mark", x=bottle.request.GET["x"],
+  return query("lock_beam_mark", camera_name=bottle.request.GET["camera_name"],
+                                 x=bottle.request.GET["x"],
                                  y=bottle.request.GET["y"])
 
 @bottle.get("/:camera/api/get_intensity")
 def get_intensity(camera):
-  return query("get_intensity", x = bottle.request.GET["x"],
+  return query("get_intensity", camera_name=bottle.request.GET["camera_name"],
+                                x = bottle.request.GET["x"],
                                 y = bottle.request.GET["y"])
 
 @bottle.get("/:camera/api/set_background")
 def set_background(camera):
-  return query("set_background", backgroundstate=bottle.request.GET["backgroundstate"])
+  return query("set_background", camera_name=bottle.request.GET["camera_name"],
+                                 backgroundstate=bottle.request.GET["backgroundstate"])
 
 #######TO DIALOGUE WITH WEBSOCKET FROM FRONT END SIDE#######
 @bottle.get('/:camera/api/image_channel', apply=[websocket])
 def provide_images(ws,camera):
   while True:
     client_id = ws.receive()
+    print "ICI : ",client_id
+    
     if client_id is not None:
-      if client_id=="false": # not terrible
-        qres = query("new_image", intensity=False)
+      query_image=client_id.split(",")
+      if query_image[0]=="false": # not terrible
+        qres = query("new_image", intensity=False, camera_name=query_image[1])
       else:
-        qres = query("new_image", intensity=client_id)
+        qres = query("new_image", intensity=True, camera_name=query_image[2], bm_x=query_image[0], bm_y=query_image[1])
       tosend = json.dumps(qres)
       ws.send(tosend)
       
@@ -344,6 +388,6 @@ def provide_images(ws,camera):
 ###############################################################
 
 if __name__=="__main__":
-    #webserver_start = webserver_main(PORT,HOST)
-    webserver_main(PORT,HOST)
+    gevent.spawn(BV)
+    webserver_main(HOST,PORT)
     gevent.wait()

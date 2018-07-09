@@ -120,12 +120,13 @@ class Video extends React.Component {
     
     var g = new Dygraph(document.getElementById("graph1"), data,
             {
+              title:'Projection along X axis',
               drawPoints: false,
               showRoller: false,
               legend : 'never',
               dateWindow : [0, this.props.profileX.length],
               labels: ['Time', 'Random'],
-              axes: {
+              /*axes: {
                 x: {
                   axisLabelFormatter: function(x) {
                     return '';
@@ -136,24 +137,25 @@ class Video extends React.Component {
                     return '';
                   }
                 }
-              }
+              }*/
             });
             
 
 
     var data2 = [];
     for(let i=0;i != this.props.profileY.length;i++){
-      data2.push([i,this.props.profileY[i]])
+      data2.push([this.props.profileY[i],i])
     }
 
     var g2 = new Dygraph(document.getElementById("graph2"), data2,
             {
+              title:'Projection along Y axis',
               drawPoints: false,
               showRoller: false,
               legend : 'never',
               dateWindow : [0, this.props.profileY.length],
               labels: ['Time', 'Random'],
-              axes: {
+              /*axes: {
                 x: {
                   axisLabelFormatter: function(x) {
                     return '';
@@ -164,7 +166,7 @@ class Video extends React.Component {
                     return '';
                   }
                 }
-              }
+              }*/
             });
 
   }
@@ -271,7 +273,8 @@ class Video extends React.Component {
                 <div className="col-md-7">
                   <Canvas ref='canvas' />
                 </div>
-                <div className="col-md-3" style={styles_rotate_graph}>
+                {/*<div className="col-md-3" style={styles_rotate_graph}>*/}
+                <div className="col-md-3">
                   <div id='graph2' width={this.props.windowWidth} height={this.props.windowHeight}/>
                 </div>
               </div>

@@ -10,7 +10,7 @@ import {updateData,setBeamMark,setROIMark,setPrevROIMark,setROI,updateDimensions
 class Canvas extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { imageSrc: "" };
+    //this.state = { imageSrc: "" };
     this.img_socket = null;
     this.registerChannel = this.registerChannel.bind(this);
     this.updateImage=this.updateImage.bind(this);
@@ -50,6 +50,7 @@ class Canvas extends React.Component {
   }
 
   componentDidUpdate(nextProps){ //called when imageSrc is updated
+    console.log("componentDidUpdate")
     if((nextProps.acqImage!=0 || nextProps.liveRun!=0) || (this.props.beam_markX!=nextProps.beam_markX && this.props.beam_markY!=nextProps.beam_markY) || (this.props.rotation!=nextProps.rotation)){
       this.updateImage(nextProps);
     }
@@ -67,7 +68,7 @@ class Canvas extends React.Component {
 
   updateImage(nextProps){
     const ctx = this.refs.myCanvas.getContext('2d');
-    let src = this.state.imageSrc;
+    let src = this.props.imageSrc;
 
     this.image.onload = () => {
       ctx.save();
@@ -82,7 +83,7 @@ class Canvas extends React.Component {
         ctx.rotate(this.props.rotation * Math.PI / 180);
         ctx.drawImage(this.image, -this.props.windowWidth/2, -this.props.windowHeight/2,this.props.windowWidth,this.props.windowHeight);
       }
-      else{ //sinon on dessine juste l'image
+      else{
         ctx.drawImage(this.image, 0, 0,this.props.windowWidth,this.props.windowHeight);
       }
       if(this.props.beam_markX != undefined && this.props.beam_markY != undefined && !this.props.activeROI && this.props.rotation === 0){
@@ -97,8 +98,7 @@ class Canvas extends React.Component {
         ctx.lineTo(this.props.beam_markX*this.props.windowWidth/this.props.imageMaxWidth, this.props.windowHeight);
         ctx.stroke();
         ctx.font = '10px Arial'
-        ctx.strokeText("x="+this.props.beam_markX+", y="+this.props.beam_markY,(this.props.beam_markX*this.props.windowWidth/this.props.imageMaxWidth)+5, (this.props.beam_markY*this.props.windowHeight/this.props.imageMaxHeight)-5);
-        //this.props.getIntensity(); Need to see how we can get intensity without calling 
+        ctx.strokeText("x="+Math.round(this.props.beam_markX*this.props.calib_x)+", y="+Math.round(this.props.beam_markY*this.props.calib_y),(this.props.beam_markX*this.props.windowWidth/this.props.imageMaxWidth)+5, (this.props.beam_markY*this.props.windowHeight/this.props.imageMaxHeight)-5);
         ctx.strokeText("I="+this.props.intensityXY,(this.props.beam_markX*this.props.windowWidth/this.props.imageMaxWidth)+5, (this.props.beam_markY*this.props.windowHeight/this.props.imageMaxHeight)+10)
         ctx.closePath();
       } else {
@@ -114,11 +114,11 @@ class Canvas extends React.Component {
         ctx.font = '15px Arial'
         ctx.fillStyle = "#00ff00"
         ctx.beginPath();
-        ctx.moveTo(0, this.props.by*this.props.windowHeight/this.props.imageMaxHeight);
-        ctx.lineTo(this.props.windowWidth, this.props.by*this.props.windowHeight/this.props.imageMaxHeight);
+        ctx.moveTo(0, (this.props.by/this.props.calib_y)*this.props.windowHeight/this.props.imageMaxHeight);
+        ctx.lineTo(this.props.windowWidth, (this.props.by/this.props.calib_y)*this.props.windowHeight/this.props.imageMaxHeight);
         ctx.stroke();
-        ctx.moveTo(this.props.bx*this.props.windowWidth/this.props.imageMaxWidth, 0);
-        ctx.lineTo(this.props.bx*this.props.windowWidth/this.props.imageMaxWidth, this.props.windowHeight);
+        ctx.moveTo((this.props.bx/this.props.calib_x)*this.props.windowWidth/this.props.imageMaxWidth, 0);
+        ctx.lineTo((this.props.bx/this.props.calib_x)*this.props.windowWidth/this.props.imageMaxWidth, this.props.windowHeight);
         ctx.stroke();
         ctx.closePath();
       }
@@ -217,14 +217,16 @@ class Canvas extends React.Component {
   
   Askimage(){    
     if (this.img_socket != null){
+      console.log("ASKIMAGE")
       if(this.props.beam_markY!=undefined && this.props.beam_markX!=undefined){
-        this.img_socket.send(JSON.stringify([this.props.beam_markX,this.props.beam_markY]));
+        //this.img_socket.send(JSON.stringify([this.props.beam_markX,this.props.beam_markY,this.props.client_id]));
+        this.img_socket.send([this.props.beam_markX,this.props.beam_markY,this.props.client_id]);
       }else{
-        this.img_socket.send(false);
+        this.img_socket.send([false,this.props.client_id]);
       }
     }
     this.img_socket.onmessage = (packed_msg) => {
-      this.setState({imageSrc: JSON.parse(packed_msg.data).jpegData});
+      //this.setState({imageSrc: JSON.parse(packed_msg.data).jpegData});
       this.updateData(JSON.parse(packed_msg.data));
     }
   }
@@ -263,6 +265,9 @@ function mapStateToProps(state) {
     intensityXY:state.canvas.intensityXY,
     bx:state.canvas.bx,
     by:state.canvas.by,
+    calib_x:state.options.calib_x,
+    calib_y:state.options.calib_y,
+    imageSrc:state.canvas.imageSrc,
   };
 }
 
@@ -274,7 +279,6 @@ function mapDispatchToProps(dispatch) {
     setPrevROIMark : bindActionCreators(setPrevROIMark, dispatch),
     setROI: bindActionCreators(setROI, dispatch),
     updateDimensions:bindActionCreators(updateDimensions, dispatch),
-    //getIntensity:bindActionCreators(getIntensity, dispatch),
     resetCrosshair: bindActionCreators(resetCrosshair, dispatch),
   };
 }

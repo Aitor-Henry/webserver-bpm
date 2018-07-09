@@ -68,7 +68,7 @@ class Options extends React.Component {
   }
 
   buttonAcquirePressed(){
-    this.props.setImgDisplay(this.props.beam_markX,this.props.beam_markY);
+    this.props.setImgDisplay();
   }
 
 

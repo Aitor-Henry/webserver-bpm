@@ -21,7 +21,7 @@ export function setROI(){
       alert('Problem to set ROI, you have to select your roi from the top left corner and go to the the bottom right corner, H and W can\'t be negative');
       return (dispatch) => {dispatch(setROIDone());}
     } else {
-      fetch('/'+state.bpmState.client_id+'/api/set_roi?x='+Math.round((state.canvas.start_X*state.canvas.imageMaxWidth/state.canvas.windowWidth)*1)/1+'&y='+Math.round((state.canvas.start_Y*state.canvas.imageMaxHeight/state.canvas.windowHeight)*1)/1+'&w='+Math.round((state.canvas.width*state.canvas.imageMaxWidth/state.canvas.windowWidth)*1)/1+'&h='+Math.round((state.canvas.height*state.canvas.imageMaxHeight/state.canvas.windowHeight)*1)/1)
+      fetch('/'+state.bpmState.client_id+'/api/set_roi?camera_name='+state.bpmState.client_id+'&x='+Math.round((state.canvas.start_X*state.canvas.imageMaxWidth/state.canvas.windowWidth)*1)/1+'&y='+Math.round((state.canvas.start_Y*state.canvas.imageMaxHeight/state.canvas.windowHeight)*1)/1+'&w='+Math.round((state.canvas.width*state.canvas.imageMaxWidth/state.canvas.windowWidth)*1)/1+'&h='+Math.round((state.canvas.height*state.canvas.imageMaxHeight/state.canvas.windowHeight)*1)/1)
         .then((response) => {
           if(!response.ok){
             throw Error(response.statusText);
@@ -47,7 +47,7 @@ export function resetRoi(){
 
   return (dispatch,getState) => {
     const state = getState()
-    fetch('/'+state.bpmState.client_id+'/api/set_roi?x='+0+'&y='+0+'&w='+0+'&h='+0)
+    fetch('/'+state.bpmState.client_id+'/api/set_roi?camera_name='+state.bpmState.client_id+'&x='+0+'&y='+0+'&w='+0+'&h='+0)
       .then((response) => {
         if(!response.ok){
           throw Error(response.statusText);
@@ -67,7 +67,7 @@ export function resetCrosshair(){
 
   return (dispatch,getState) => {
     const state = getState()
-    fetch('/'+state.bpmState.client_id+'/api/lock_beam_mark?x='+0+'&y='+0)
+    fetch('/'+state.bpmState.client_id+'/api/lock_beam_mark?camera_name='+state.bpmState.client_id+'&x='+0+'&y='+0)
       .then((response) => {
         if(!response.ok){
           throw Error(response.statusText);
@@ -89,7 +89,7 @@ export function setBeamMark(X,Y){
   return (dispatch,getState) => {
     const state = getState()
     console.log(X,Y)
-      fetch('/'+state.bpmState.client_id+'/api/get_intensity?x='+X+'&y='+Y)
+      fetch('/'+state.bpmState.client_id+'/api/get_intensity?camera_name='+state.bpmState.client_id+'&x='+X+'&y='+Y)
         .then((response) => {
           if(!response.ok){
             throw Error(response.statusText);
@@ -109,7 +109,7 @@ export function setBeamMarkDone(X,Y,status){
 export function getStatus(windowWidth,windowHeight){
   return (dispatch,getState) => {
     const state = getState()
-    fetch('/'+state.bpmState.client_id+'/api/get_status?')
+    fetch('/'+state.bpmState.client_id+'/api/get_status?camera_name='+state.bpmState.client_id)
       .then((response) => {
         if(!response.ok){
           throw Error(response.statusText);
@@ -124,26 +124,6 @@ export function getStatus(windowWidth,windowHeight){
 export function getStatusDone(status,windowWidth,windowHeight){
   return { type: 'GET_STATUS_DONE',status,windowWidth,windowHeight}
 }
-
-/*export function getIntensity(){
-  return (dispatch,getState) => {
-    const state = getState()
-    fetch('/'+state.bpmState.client_id+'/api/get_intensity?x='+state.canvas.beam_markX+'&y='+state.canvas.beam_markY)
-      .then((response) => {
-        if(!response.ok){
-          throw Error(response.statusText);
-        }
-        return response;
-      }) .then(response => response.json())
-         .then(response => dispatch(getIntensityDone(response)))
-         .catch(() => alert('Problem to get status, check console server'))
-  }
-}
-
-export function getIntensityDone(data){
-  console.log('GET_INTENSITY : ',data)
-  return { type: 'GET_INTENSITY', data}
-}*/
 
 export function updateDimensions(windowWidth,windowHeight){
   return { type: 'UPDATE_DIMENSIONS',windowWidth,windowHeight}
