@@ -36,7 +36,6 @@ HOMEPAGE_TITLE = "BPM Monitor"
 HOST = socket.gethostname()
 PORT=8066 #defined arbitrarly
 WEB_QUERIES = gevent.queue.Queue()
-NEW_CAMERA = gevent.queue.Queue()
 
 
 #Class BV
@@ -62,7 +61,6 @@ class BV:
       bpm_device.subscribe_event('bvdata', PyTango.EventType.CHANGE_EVENT, self.handle_new_image, [])
       dict_to_add = {camera_name : [limaccds_device, bpm_device, bvdata]}
       self.cameras_running.update(dict_to_add)
-      print self.cameras_running
       return False
 
   def find_tango_device(self,lima_name):
@@ -82,7 +80,6 @@ class BV:
         return list_tuples_int
     
     camera_name=evt_bvdata.attr_name.split("/")[-2]
-    print camera_name, type(camera_name)
     if self.event_counter==0:
       print("Synchronous event with bpm device.")
       return None
@@ -141,7 +138,6 @@ class BV:
       if query["query"] == "new_image":
         while self.cameras_running[query["camera_name"]][2] == None:
           time.sleep(self.getExposuretime(query["camera_name"])/10) #need to wait bpm return bvdata
-        print "OK GOT IT : ", time.time()
         query["reply"].update(self.cameras_running[query["camera_name"]][2])
         if query["intensity"]==True:
           x_int=int(query["bm_x"])
@@ -174,7 +170,7 @@ class BV:
           except:
             logging.exception("Could not set roi")
           else:
-            pass #print "roi is set"
+            pass
           query["event"].set()
 
       elif query["query"] == "set_img_display_config":
@@ -344,8 +340,7 @@ def set_background(camera):
 def provide_images(ws,camera):
   while True:
     client_id = ws.receive()
-    print "ICI : ",client_id
-    
+    print "client_id : ", client_id
     if client_id is not None:
       query_image=client_id.split(",")
       if query_image[0]=="false": # not terrible

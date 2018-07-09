@@ -139,7 +139,7 @@ class Video extends React.Component {
 
     var data2 = [];
     for(let i=0;i != this.props.profileY.length;i++){
-      data2.push([this.props.profileY[i],i])
+      data2.push([i,this.props.profileY[i]])
     }
 
     var g2 = new Dygraph(document.getElementById("graph2"), data2,
@@ -148,8 +148,8 @@ class Video extends React.Component {
               drawPoints: false,
               showRoller: false,
               legend : 'never',
-              dateWindow : [this.props.profileY.length, 0],
-              labels: ['Time', 'Random'],
+              dateWindow : [0,this.props.profileY.length],
+              labels: ['Time','Random'],
               /*axes: {
                 x: {
                   axisLabelFormatter: function(x) {
