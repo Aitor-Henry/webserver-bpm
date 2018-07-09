@@ -43,7 +43,6 @@ export default function canvas(state = initialState, action) {
 
     case 'SET_BEAM_MARK' :
     {
-      console.log(action.status.intensity)
       return Object.assign({}, state, {intensityXY:action.status.intensity,beam_markX:action.X, beam_markY:action.Y})
     }
 

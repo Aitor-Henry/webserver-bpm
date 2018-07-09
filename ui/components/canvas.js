@@ -10,7 +10,6 @@ import {updateData,setBeamMark,setROIMark,setPrevROIMark,setROI,updateDimensions
 class Canvas extends React.Component {
   constructor(props) {
     super(props);
-    //this.state = { imageSrc: "" };
     this.img_socket = null;
     this.registerChannel = this.registerChannel.bind(this);
     this.updateImage=this.updateImage.bind(this);
@@ -49,8 +48,7 @@ class Canvas extends React.Component {
     window.addEventListener("resize", this.updateDimensions.bind(this));
   }
 
-  componentDidUpdate(nextProps){ //called when imageSrc is updated
-    console.log("componentDidUpdate")
+  componentDidUpdate(nextProps){
     if((nextProps.acqImage!=0 || nextProps.liveRun!=0) || (this.props.beam_markX!=nextProps.beam_markX && this.props.beam_markY!=nextProps.beam_markY) || (this.props.rotation!=nextProps.rotation)){
       this.updateImage(nextProps);
     }
@@ -109,7 +107,7 @@ class Canvas extends React.Component {
       if(this.props.start_X != undefined && this.props.start_Y != undefined && this.props.rotation===0){
         this.draw_ROI_Marker()
       }
-      if(this.props.bx>0 && this.props.by>0){
+      if(this.props.bx>0 && this.props.by>0){ // draw green cross on point (x,y) found by bpm
         ctx.strokeStyle = "#00ff00" //green
         ctx.font = '15px Arial'
         ctx.fillStyle = "#00ff00"
@@ -132,7 +130,6 @@ class Canvas extends React.Component {
 
   handleMouseDown(e){
     if(this.props.activeROI){
-      console.log('Mousedown')
       this.refs.myCanvas.style.cursor = "crosshair"
       this.drawing = true;
       this.props.setROIMark(e.nativeEvent.offsetX,e.nativeEvent.offsetY)
@@ -217,16 +214,13 @@ class Canvas extends React.Component {
   
   Askimage(){    
     if (this.img_socket != null){
-      console.log("ASKIMAGE")
       if(this.props.beam_markY!=undefined && this.props.beam_markX!=undefined){
-        //this.img_socket.send(JSON.stringify([this.props.beam_markX,this.props.beam_markY,this.props.client_id]));
         this.img_socket.send([this.props.beam_markX,this.props.beam_markY,this.props.client_id]);
       }else{
         this.img_socket.send([false,this.props.client_id]);
       }
     }
     this.img_socket.onmessage = (packed_msg) => {
-      //this.setState({imageSrc: JSON.parse(packed_msg.data).jpegData});
       this.updateData(JSON.parse(packed_msg.data));
     }
   }

@@ -118,12 +118,6 @@ export default function video(state = initialState, action) {
     case 'ROTATION':
     {
 
-      /*if(state.rotation+action.rotation <= 270){
-        return Object.assign({}, state, {rotation:state.rotation+action.rotation})
-      }
-      else{
-        return Object.assign({}, state, {rotation:0})
-      }*/
       return Object.assign({}, state, {rotation:(state.rotation+action.rotation)%360})
 
     }

@@ -16,33 +16,28 @@ class Options extends React.Component {
     this.textStateCalib_x = this.textStateCalib_x.bind(this);
     this.textStateCalib_y = this.textStateCalib_y.bind(this);
     this.apply = this.apply.bind(this);
-    //this.save = this.save.bind(this);
 
   }
 
 
-  textStateExposure(){ //Methode qui va appeler les actions suivant letat du input
-    //console.log(ReactDom.findDOMNode(this.refs.Form))
+  textStateExposure(){
 
-    if(ReactDom.findDOMNode(this.refs.exposure).value > -0.01){ //On recupere le FormControl de ref 'Form' et on verifie Si le texte entre dans le FormControl n'est pas null
-      this.props.textEnterExposure(ReactDom.findDOMNode(this.refs.exposure).value); //On appel l'action textEnter avec le text a afficher
+    if(ReactDom.findDOMNode(this.refs.exposure).value > -0.01){ // if >0, can't write "0,xxx" because of the first 0
+      this.props.textEnterExposure(ReactDom.findDOMNode(this.refs.exposure).value);
     }
     else {
-      this.props.textEmptyExposure(); //Sinon on appel l'action textEmpty
+      this.props.textEmptyExposure(); 
     }
   }
 
   textStateSampling(){
-
-    {/*console.log(ReactDom.findDOMNode(this.refs.sampling).value)*/}
-
 
     if(ReactDom.findDOMNode(this.refs.sampling).value > -0.01 && ReactDom.findDOMNode(this.refs.sampling).value<=(1.0/this.props.exposureTimeValue)){
 
       this.props.textEnterSampling(ReactDom.findDOMNode(this.refs.sampling).value);
     }
     else{
-      this.props.textEmptySampling(); //Sinon on appel l'action textEmpty
+      this.props.textEmptySampling();
     }
   }
 
@@ -52,7 +47,7 @@ class Options extends React.Component {
       this.props.textEnterCalib_X(ReactDom.findDOMNode(this.refs.x).value);
     }
     else{
-      this.props.textEmptyX(); //Sinon on appel l'action textEmpty
+      this.props.textEmptyX();
     }
   }
 
@@ -63,7 +58,7 @@ class Options extends React.Component {
       this.props.textEnterCalib_Y(ReactDom.findDOMNode(this.refs.y).value);
     }
     else{
-      this.props.textEmptyY(); //Sinon on appel l'action textEmpty
+      this.props.textEmptyY();
     }
   }
 
@@ -73,7 +68,6 @@ class Options extends React.Component {
 
 
   liveChecked(){
-    {/*console.log(this.props.liveCheckedBool)*/}
     this.props.liveChecked();
   }
 
@@ -82,11 +76,6 @@ class Options extends React.Component {
     this.props.update_calibration_apply();
   }
 
-/*
-  save(){
-    this.props.update_calibration_save();
-  }
-*/
 
   render(){
     return (
@@ -121,7 +110,6 @@ class Options extends React.Component {
           <div className="col-md-4">
           <Button bsStyle={this.props.buttonAcquireStyle} onClick={this.buttonAcquirePressed}><Glyphicon glyph={this.props.buttonAcquireGlyphiconText} /> {this.props.buttonAcquireText}</Button>
           {" "}
-          {/*<Button>Set Pixel Size</Button>*/}
           <Dropdown title="Pixel Size" id="bg-vertical-dropdown-Set-Pixel-Size">
             <Form horizontal>
               <FormGroup controlId="formHorizontalPixelSizeX">
@@ -136,7 +124,6 @@ class Options extends React.Component {
             <MenuItem divider />
             <Button disabled={this.props.applyDisabled || this.props.liveRun === 1 } onClick={this.apply} >Apply</Button>
             {" "}
-            {/*<Button disabled={this.props.saveDisabled || this.props.liveRun === 1} onClick={this.save} >Get Calibration</Button>*/}
           </Dropdown>
           </div>
         </div>
@@ -158,16 +145,13 @@ function mapStateToProps(state) {
     calib_x: state.options.calib_x,
     calib_y: state.options.calib_y,
     applyDisabled:state.options.applyDisabled,
-    //saveDisabled:state.options.saveDisabled,
     liveRun: state.options.liveRun,
-
-    //TEST
     beam_markX:state.canvas.beam_markX,
     beam_markY:state.canvas.beam_markY,
   };
 }
 
-function mapDispatchToProps(dispatch) { //On rend les action accessible a notre object react
+function mapDispatchToProps(dispatch) {
   return {
     buttonAcquirePressed: bindActionCreators(buttonAcquirePressed, dispatch),
     textEnterExposure: bindActionCreators(textEnterExposure, dispatch),
@@ -182,7 +166,6 @@ function mapDispatchToProps(dispatch) { //On rend les action accessible a notre 
     getBeamPos:bindActionCreators(getBeamPos,dispatch),
     setImgDisplay:bindActionCreators(setImgDisplay,dispatch),
     update_calibration_apply : bindActionCreators(update_calibration_apply,dispatch),
-    //update_calibration_save : bindActionCreators(update_calibration_save,dispatch),
 
   };
 }

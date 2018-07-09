@@ -36,8 +36,8 @@ export function setCrosshair(){
           throw Error(response.statusText);
         }
         return response;
-      }) .then(response => dispatch(setCrosshairDone())) //Si on a une reponse du server on execute getBeamPos
-         .catch(() => alert('Problem to set BeamMark, check console server'))//Sinon il ya un probleme
+      }) .then(response => dispatch(setCrosshairDone())) 
+         .catch(() => alert('Problem to set BeamMark, check console server'))
   }
 
 }
@@ -59,8 +59,8 @@ export function rotation(rotation){
 
 
 //////////////////////////////////////////checkbox//////////////////////////////////////////////////////
-export function liveChecked() { //enable est le booleen passe en parametre
-  return { type: "LIVE_CHECKED"} //On informe le reducers qu'on est dans le cas d'un text vide
+export function liveChecked() { 
+  return { type: "LIVE_CHECKED"}
 }
 
 export function autoscaleChecked(){
@@ -76,11 +76,11 @@ export function yChecked(){
 }
 
 ////////////////////////////////////////////TEXT/////////////////////////////////////////////////////////
-export function textEnterMax(text) { //enable est le booleen passe en parametre
-  return { type: "TEXT_ENTER_MAX", text} //On informe le reducers qu'on est dans le cas d'un text non vide et on lui passe le texte
+export function textEnterMax(text) { 
+  return { type: "TEXT_ENTER_MAX", text} 
 }
 
-export function textEmptyMax() { //enable est le booleen passe en parametre
-  return { type: "TEXT_EMPTY_MAX"} //On informe le reducers qu'on est dans le cas d'un text vide
+export function textEmptyMax() {
+  return { type: "TEXT_EMPTY_MAX"}
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////

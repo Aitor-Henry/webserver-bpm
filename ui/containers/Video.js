@@ -46,22 +46,18 @@ class Video extends React.Component {
   }
 
   autoscaleChecked(){
-    {/*console.log(this.props.autoscaleCheckedBool);*/}
     this.props.autoscaleChecked();
   }
 
   temperatureChecked(){
-    {/*console.log(this.props.temperatureCheckedBool);*/}
     this.props.temperatureChecked();
   }
 
   yChecked(){
-    {/*console.log(this.props.yCheckedBool)*/}
     this.props.yChecked();
   }
 
   textStateMax(){
-    {/*console.log(ReactDom.findDOMNode(this.refs.max).value)*/}
     if(ReactDom.findDOMNode(this.refs.max).textLength > 0){
       this.props.textEnterMax(ReactDom.findDOMNode(this.refs.max).value);
     }
@@ -71,13 +67,12 @@ class Video extends React.Component {
   }
 
   crosshair(){
-    console.log('set crosshair');
     this.props.setCrosshair();
   }
 
   resetCROSSHAIR(){
-    if(this.props.activeCrosshair){ //si l'utilisateur essaye de resetCROSSHAIR alors quil lavait verouille
-      this.crosshair(); // pour remettre crosshair a 0
+    if(this.props.activeCrosshair){
+      this.crosshair();
     }
     this.props.resetCrosshair();
 
@@ -88,11 +83,11 @@ class Video extends React.Component {
   }
 
   roi(){
-    this.props.setRoi(); //Active le mode roi
+    this.props.setRoi();
   }
 
   resetROI(){
-    this.props.resetRoi(); //On remet le roi a 0
+    this.props.resetRoi();
     if(this.props.activeCrosshair){
       this.crosshair();
     }
@@ -105,7 +100,7 @@ class Video extends React.Component {
       //this.props.switchDimensions(Math.abs(this.props.windowHeight),Math.abs(this.props.windowWidth));
       this.props.rotation(rotate);
     }
-    else { //pour 0 et 180
+    else {
       this.props.switchDimensions(Math.abs(this.props.windowWidth),Math.abs(this.props.windowHeight));
       this.props.rotation(rotate);
     }
@@ -153,7 +148,7 @@ class Video extends React.Component {
               drawPoints: false,
               showRoller: false,
               legend : 'never',
-              dateWindow : [0, this.props.profileY.length],
+              dateWindow : [this.props.profileY.length, 0],
               labels: ['Time', 'Random'],
               /*axes: {
                 x: {
@@ -226,10 +221,6 @@ class Video extends React.Component {
                       </SplitButton>
                     </OverlayTrigger>
 
-                    {/*<OverlayTrigger placement="top" overlay={resetCrosshair}>
-                      <Button onClick={this.resetCROSSHAIR} disabled={this.props.liveRun ===1 || (this.props.beam_markX === undefined && this.props.beam_markX === undefined)}> Reset <Glyphicon glyph="screenshot" /> </Button>
-                    </OverlayTrigger>*/}
-
                     <OverlayTrigger placement="top" overlay={background}>
                       <Button onClick={this.background} active={this.props.activeBkgnd} disabled={this.props.liveRun ===1}><Glyphicon glyph="picture" /> Bkgnd</Button>
                     </OverlayTrigger>
@@ -239,10 +230,6 @@ class Video extends React.Component {
                       <MenuItem onClick={this.resetROI} disabled={this.props.liveRun ===1 || this.props.resetDesactivated}><Glyphicon glyph="remove" /> Reset ROI</MenuItem>
                     </SplitButton>
                     </OverlayTrigger>
-
-                    {/*<OverlayTrigger placement="top" overlay={resetRoi}>
-                      <Button onClick={this.resetROI} disabled={this.props.liveRun ===1 || this.props.img_num === 0 || this.props.resetDesactivated}><Glyphicon glyph="remove" /> Reset ROI</Button>
-                    </OverlayTrigger>*/}
 
                     <DropdownButton title={this.props.selectedLut} disabled={this.props.liveRun ===1} id="bg-vertical-dropdown-1">
                       <MenuItem eventKey="1" onClick={this.linearClicked}>Linear</MenuItem>
@@ -262,12 +249,7 @@ class Video extends React.Component {
 
                   </ButtonGroup>
                   </div>
-                {/*<div className="col-md-3"></div>*/}
-                {/*}<div className="col-md-1" >/*}
-                  {/*<Image src="../../../xbpm/ui/images/yt.png"/>*/}
-                  {/*<Canvas ref='canvas' />
-                  {/*<Image src="../../../xbpm/ui/images/graphcote.png" height='400px'/>
-                </div>*/}
+
               </div>
               <div className="row">
                 <div className="col-md-7">
@@ -275,7 +257,7 @@ class Video extends React.Component {
                 </div>
                 {/*<div className="col-md-3" style={styles_rotate_graph}>*/}
                 <div className="col-md-3">
-                  <div id='graph2' width={this.props.windowWidth} height={this.props.windowHeight}/>
+                  <div id='graph2'/>
                 </div>
               </div>
               <div className="row">
@@ -325,7 +307,7 @@ function mapStateToProps(state) {
   };
 }
 
-function mapDispatchToProps(dispatch) { //On rend les action accessible a notre object react
+function mapDispatchToProps(dispatch) {
   return {
     linearClicked: bindActionCreators(linearClicked, dispatch),
     logarithmicClicked: bindActionCreators(logarithmicClicked, dispatch),

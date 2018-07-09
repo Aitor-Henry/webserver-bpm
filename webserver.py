@@ -17,9 +17,7 @@ except ImportError:
     os.environ["QUB_SUBPATH"]="qt4"
     from Qub.CTools import pixmaptools
 import logging
-#import sys
-#import copy
-from threading import Thread
+
  
 
 # patch socket module
@@ -42,7 +40,7 @@ NEW_CAMERA = gevent.queue.Queue()
 
 
 #Class BV
-class BV():
+class BV:
 
   def __init__(self):
     self.bvdata = None
@@ -245,32 +243,9 @@ def query(name, **kwargs):
     return reply
 
 
-
-
-
-
-
 def webserver_main(hostname,portnumber):
   bottle.run(server=GeventWebSocketServer, host=hostname, port=portnumber)
 
-
-  """
-  global NEW_CAMERA
-  if NEW_CAMERA is None:
-    NEW_CAMERA = gevent.queue.Queue()
-  print("Init webserver ........ ")
-  threads = []
-  while True:
-    print "wait for new camera"
-    camera_name = NEW_CAMERA.get()
-    print "Camera name sent : ", camera_name
-    new_thread = BV(camera_name)
-    new_thread.start()
-    threads.append(new_thread)
-    print "cameras launch : ", threads
-
-  #server_thread.start()"""
-  
 
 
 
@@ -309,11 +284,7 @@ def server_static(filename):
 
 @bottle.route("/:camera/")
 def get_camera_page(camera):
-  
-  """global NEW_CAMERA
-  if NEW_CAMERA is None:
-    NEW_CAMERA = gevent.queue.Queue()
-  NEW_CAMERA.put(camera)"""
+
   return bottle.static_file("index.html", root=os.path.dirname(os.path.abspath(__file__)))
 
 
