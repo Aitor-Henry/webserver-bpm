@@ -3,7 +3,7 @@ import ReactDom from 'react-dom';
 import { Navbar,Nav,NavItem,NavDropdown,MenuItem,Form,FormGroup,FormControl,Col,ControlLabel,Button,Glyphicon,DropdownButton,} from 'react-bootstrap';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import {buttonAcquirePressed,textEnterExposure,textEnterSampling,textEmptyExposure,textEmptySampling,liveChecked,textEnterCalib_X,textEnterCalib_Y,textEmptyX,textEmptyY,getBeamPos,setImgDisplay,update_calibration_apply,update_calibration_save } from '../actions/options.js'
+import {buttonAcquirePressed,textEnterExposure,textEnterSampling,textEmptyExposure,textEmptySampling,liveChecked,textEnterCalib_X,textEnterCalib_Y,textEmptyX,textEmptyY,setImgDisplay,update_calibration_apply} from '../actions/options.js'
 import Dropdown from '../components/dropdown.js'
 
 class Options extends React.Component {
@@ -163,7 +163,6 @@ function mapDispatchToProps(dispatch) {
     textEnterCalib_Y:bindActionCreators(textEnterCalib_Y, dispatch),
     textEmptyX:bindActionCreators(textEmptyX, dispatch),
     textEmptyY:bindActionCreators(textEmptyY, dispatch),
-    getBeamPos:bindActionCreators(getBeamPos,dispatch),
     setImgDisplay:bindActionCreators(setImgDisplay,dispatch),
     update_calibration_apply : bindActionCreators(update_calibration_apply,dispatch),
 

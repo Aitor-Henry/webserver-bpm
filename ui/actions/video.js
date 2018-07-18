@@ -12,7 +12,7 @@ export function updateBackground(){
 
     return (dispatch,getState) => {
       const state = getState()
-      fetch('/'+state.bpmState.client_id+'/api/set_background?camera_name='+state.bpmState.client_id+'&backgroundstate='+state.video.backgroundstate)
+      fetch('/'+state.bpmState.client_id+'/api/set_background?backgroundstate='+state.video.backgroundstate)
         .then((response) => {
           if(!response.ok){
             throw Error(response.statusText);
@@ -30,7 +30,7 @@ export function backgroundState(){
 export function setCrosshair(){
   return (dispatch,getState) => {
     const state = getState()
-    fetch('/'+state.bpmState.client_id+'/api/lock_beam_mark?camera_name='+state.bpmState.client_id+'&x='+state.canvas.beam_markX+'&y='+state.canvas.beam_markY)
+    fetch('/'+state.bpmState.client_id+'/api/lock_beam_mark?x='+state.canvas.beam_markX+'&y='+state.canvas.beam_markY)
       .then((response) => {
         if(!response.ok){
           throw Error(response.statusText);

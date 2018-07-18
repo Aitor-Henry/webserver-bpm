@@ -18,7 +18,8 @@ except ImportError:
     from Qub.CTools import pixmaptools
 import logging
 
- 
+import threading
+
 
 # patch socket module
 socket.socket._bind = socket.socket.bind
@@ -38,7 +39,7 @@ PORT=8066 #defined arbitrarly
 WEB_QUERIES = gevent.queue.Queue()
 
 
-#Class BV
+#Class BV, talks to Tango devices and bottle app.
 class BV:
 
   def __init__(self):
@@ -48,7 +49,8 @@ class BV:
     self.event_counter = 0
     self.handle_webserver_queries()
     
-  def camera_init(self, camera_name):
+  def camera_init(self, camera_name): 
+    """When user launch a new camera in broswer. Add to cameras running the devices and bvdata."""
     bvdata=None
     if self.cameras_running.has_key(camera_name):
       return True
@@ -71,13 +73,15 @@ class BV:
             return(device)
 
   def handle_new_image(self,evt_bvdata):
+    """Callback function from the subscribe_event on bvdata"""
 
     def ListStrToListInt(list_str):
-        list_int_clean=list_str[1:len(list_str)-1].split(',')
-        list_tuples_int=[]
-        for i in range(0,len(list_int_clean)):
-            list_tuples_int.append(int(list_int_clean[i]))
-        return list_tuples_int
+      """Due to the type of the profiles, they are pass as a string. This function is to convert them back."""
+      list_int_clean=list_str[1:len(list_str)-1].split(',')
+      list_tuples_int=[]
+      for i in range(0,len(list_int_clean)):
+        list_tuples_int.append(int(list_int_clean[i]))
+      return list_tuples_int
     
     camera_name=evt_bvdata.attr_name.split("/")[-2]
     if self.event_counter==0:
@@ -96,7 +100,7 @@ class BV:
       self.cameras_running[camera_name][2] = result_array
       
 
-  #methods
+  """Methods used in get_status()"""
   def getExposuretime(self,camera_name):
     return self.cameras_running[camera_name][0].acq_expo_time
 
@@ -110,7 +114,6 @@ class BV:
 
   def setExposuretime(self,exp_t,camera_name):
     self.cameras_running[camera_name][0].acq_expo_time = exp_t
-
 
   def getAcqStatus(self,camera_name):
     return self.cameras_running[camera_name][0].acq_status
@@ -126,8 +129,9 @@ class BV:
   def getDimensionImage(self,camera_name):
     return (self.cameras_running[camera_name][0].image_width,self.cameras_running[camera_name][0].image_height)
 
-    
+  
   def handle_webserver_queries(self):
+    """Loop dealing with queries from broswer."""
     while True:
       self.event_counter=1
       query = get_query()
@@ -147,9 +151,9 @@ class BV:
           query["reply"].update({"intensity": -1})
         query["event"].set()
         self.cameras_running[query["camera_name"]][2] = None
-
+        
       elif query["query"] == "get_status":
-          query["reply"].update({ "exposure_time": self.getExposuretime(query["camera_name"]),
+        query["reply"].update({ "exposure_time": self.getExposuretime(query["camera_name"]),
                                   "live": True if self.getAcqStatus(query["camera_name"])=='Running' else False,
                                   "roi": self.HasRoi(query["camera_name"]),
                                   "full_width": self.getDimensionImage(query["camera_name"])[0],
@@ -162,35 +166,26 @@ class BV:
                                   "background": self.cameras_running[query["camera_name"]][1].HasBackground(),
                                   "beam_mark_x": float(self.cameras_running[query["camera_name"]][1].beammark[0]),
                                   "beam_mark_y": float(self.cameras_running[query["camera_name"]][1].beammark[1])})
-          query["event"].set()
+        query["event"].set()
 
       elif query["query"] == "set_roi":
-          try:
-             self.cameras_running[query["camera_name"]][0].image_roi = (query["x"],query["y"],query["w"],query["h"]) # is args in the good order ?
-          except:
-            logging.exception("Could not set roi")
-          else:
-            pass
-          query["event"].set()
+        try:
+          self.cameras_running[query["camera_name"]][0].image_roi = (query["x"],query["y"],query["w"],query["h"]) # is args in the good order ?
+        except:
+          logging.exception("Could not set roi")
+        else:
+          pass
+        query["event"].set()
 
       elif query["query"] == "set_img_display_config":
-          self.cameras_running[query["camera_name"]][1].color_map = bool(int(query["color_map"]))
-          self.cameras_running[query["camera_name"]][1].autoscale = bool(int(query["autoscale"]))
-          if query["lut_method"] == "Logarithmic":
-            self.cameras_running[query["camera_name"]][1].lut_method = "LOG"
-          else:
-            self.cameras_running[query["camera_name"]][1].lut_method = "LINEAR"
-          query["event"].set()
+        self.cameras_running[query["camera_name"]][1].color_map = bool(int(query["color_map"]))
+        self.cameras_running[query["camera_name"]][1].autoscale = bool(int(query["autoscale"]))
+        if query["lut_method"] == "Logarithmic":
+          self.cameras_running[query["camera_name"]][1].lut_method = "LOG"
+        else:
+          self.cameras_running[query["camera_name"]][1].lut_method = "LINEAR"
 
-      elif query["query"] == "update_calibration":
         self.cameras_running[query["camera_name"]][1].calibration = ([float(query["calib_x"]), float(query["calib_y"])])
-        query["event"].set()
-
-      elif query["query"] == "lock_beam_mark":
-        self.cameras_running[query["camera_name"]][1].beammark = ([int(query["x"]), int(query["y"])])
-        query["event"].set()
-
-      elif query["query"] == "get_beam_position":
         self.setExposuretime(float(query["exp_t"]),query["camera_name"])
         self.setAcqRate(float(query["acq_rate"]),query["camera_name"])
         if self.cameras_running[query["camera_name"]][0].ready_for_next_image==False:
@@ -203,6 +198,14 @@ class BV:
           self.cameras_running[query["camera_name"]][0].acq_nb_frames = 1
           self.cameras_running[query["camera_name"]][0].prepareAcq()
           self.cameras_running[query["camera_name"]][0].startAcq()
+        query["event"].set()
+
+      elif query["query"] == "update_calibration":
+        self.cameras_running[query["camera_name"]][1].calibration = ([float(query["calib_x"]), float(query["calib_y"])])
+        query["event"].set()
+
+      elif query["query"] == "lock_beam_mark":
+        self.cameras_running[query["camera_name"]][1].beammark = ([int(query["x"]), int(query["y"])])
         query["event"].set()
 
       elif query["query"] == "get_intensity":
@@ -243,8 +246,7 @@ def webserver_main(hostname,portnumber):
   bottle.run(server=GeventWebSocketServer, host=hostname, port=portnumber)
 
 
-
-
+######### BOTTLE ROUTES #########
 @bottle.route("/")
 def index():
   tango_db = PyTango.DeviceProxy("sys/database/2")
@@ -287,11 +289,11 @@ def get_camera_page(camera):
 ########--------------------------------------------------------------------------------------########
 @bottle.get('/:camera/api/get_status')
 def get_status(camera):
-  return query("get_status", camera_name=bottle.request.GET["camera_name"])
+  return query("get_status", camera_name=camera)
 
 @bottle.get("/:camera/api/set_roi")
 def set_roi(camera):
-  res = query("set_roi",  camera_name=bottle.request.GET["camera_name"],
+  res = query("set_roi",  camera_name=camera,
                           x=int(bottle.request.GET["x"]),
                           y=int(bottle.request.GET["y"]),
                           w=int(bottle.request.GET["w"]),
@@ -300,47 +302,52 @@ def set_roi(camera):
 
 @bottle.get("/:camera/api/get_beam_position")
 def acquire(camera):
-  return query("get_beam_position", camera_name=bottle.request.GET["camera_name"],
+  return query("get_beam_position", camera_name=camera,
                                     exp_t=bottle.request.GET["exp_t"],
                                     live = bottle.request.GET["live"],
                                     acq_rate = bottle.request.GET["acq_rate"])
 
 @bottle.get("/:camera/api/img_display_config")
 def set_img_display_config(camera):
-  return query("set_img_display_config",  camera_name=bottle.request.GET["camera_name"],
+  return query("set_img_display_config",  camera_name=camera,
                                           autoscale=bottle.request.GET["autoscale"],
                                           color_map=bottle.request.GET["color_map"],
-                                          lut_method=bottle.request.GET["autoscale_option"])
+                                          lut_method=bottle.request.GET["autoscale_option"],
+                                          calib_x=bottle.request.GET["x"],
+                                          calib_y=bottle.request.GET["y"],
+                                          exp_t=bottle.request.GET["exp_t"],
+                                          live = bottle.request.GET["live"],
+                                          acq_rate = bottle.request.GET["acq_rate"])
 
 @bottle.get("/:camera/api/update_calibration")
 def update_calib(camera):
-  return query("update_calibration", camera_name=bottle.request.GET["camera_name"],
+  return query("update_calibration", camera_name=camera,
                                      calib_x=bottle.request.GET["x"],
                                      calib_y=bottle.request.GET["y"])
 
 @bottle.get("/:camera/api/lock_beam_mark")
 def lock_beam_mark(camera):
-  return query("lock_beam_mark", camera_name=bottle.request.GET["camera_name"],
+  return query("lock_beam_mark", camera_name=camera,
                                  x=bottle.request.GET["x"],
                                  y=bottle.request.GET["y"])
 
 @bottle.get("/:camera/api/get_intensity")
 def get_intensity(camera):
-  return query("get_intensity", camera_name=bottle.request.GET["camera_name"],
+  return query("get_intensity", camera_name=camera,
                                 x = bottle.request.GET["x"],
                                 y = bottle.request.GET["y"])
 
 @bottle.get("/:camera/api/set_background")
 def set_background(camera):
-  return query("set_background", camera_name=bottle.request.GET["camera_name"],
+  return query("set_background", camera_name=camera,
                                  backgroundstate=bottle.request.GET["backgroundstate"])
 
 #######TO DIALOGUE WITH WEBSOCKET FROM FRONT END SIDE#######
 @bottle.get('/:camera/api/image_channel', apply=[websocket])
 def provide_images(ws,camera):
+  #import pdb; pdb.set_trace()
   while True:
     client_id = ws.receive()
-    print "client_id : ", client_id
     if client_id is not None:
       query_image=client_id.split(",")
       if query_image[0]=="false": # not terrible
@@ -356,4 +363,4 @@ def provide_images(ws,camera):
 if __name__=="__main__":
     gevent.spawn(BV)
     webserver_main(HOST,PORT)
-    gevent.wait()
+#    gevent.wait()

@@ -3,8 +3,7 @@ import ReactDom from 'react-dom'
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import {updateData,setBeamMark,setROIMark,setPrevROIMark,setROI,updateDimensions, resetCrosshair} from '../actions/canvas.js'
-
-
+import {updateBackground} from '../actions/video.js'
 
 
 class Canvas extends React.Component {
@@ -50,6 +49,7 @@ class Canvas extends React.Component {
 
   componentDidUpdate(nextProps){
     if((nextProps.acqImage!=0 || nextProps.liveRun!=0) || (this.props.beam_markX!=nextProps.beam_markX && this.props.beam_markY!=nextProps.beam_markY) || (this.props.rotation!=nextProps.rotation)){
+      console.log("COMPONENTDIDUPDATE")
       this.updateImage(nextProps);
     }
     
@@ -85,7 +85,7 @@ class Canvas extends React.Component {
         ctx.drawImage(this.image, 0, 0,this.props.windowWidth,this.props.windowHeight);
       }
       if(this.props.beam_markX != undefined && this.props.beam_markY != undefined && !this.props.activeROI && this.props.rotation === 0){
-        ctx.strokeStyle = "#ef0000" //red
+        ctx.strokeStyle = "#ef0000" //red, cross for beamlock
         ctx.font = '15px Arial'
         ctx.fillStyle = "#ef0000" 
         ctx.beginPath();
@@ -107,7 +107,7 @@ class Canvas extends React.Component {
       if(this.props.start_X != undefined && this.props.start_Y != undefined && this.props.rotation===0){
         this.draw_ROI_Marker()
       }
-      if(this.props.bx>0 && this.props.by>0){ // draw green cross on point (x,y) found by bpm
+      if(this.props.bx>0 && this.props.by>0 && this.props.rotation===0 && this.props.calib_x===nextProps.calib_x && this.props.calib_y===nextProps.calib_y){ // draw green cross on point (x,y) found by bpm
         ctx.strokeStyle = "#00ff00" //green
         ctx.font = '15px Arial'
         ctx.fillStyle = "#00ff00"
@@ -140,7 +140,7 @@ class Canvas extends React.Component {
   handleMouseMove(e){
    if(this.props.activeROI && this.drawing === true){
        if(this.props.start_X != undefined && this.props.start_Y != undefined && this.props.prevY != undefined && this.props.prevY != undefined ){
-         this.props.setPrevROIMark(e.nativeEvent.offsetX,e.nativeEvent.offsetY,(e.nativeEvent.offsetX - this.props.start_X),(e.nativeEvent.offsetY - this.props.start_Y)); //Permet de definir les coordonne du point de la souris et la width et height du rectangle
+         this.props.setPrevROIMark(e.nativeEvent.offsetX,e.nativeEvent.offsetY,(e.nativeEvent.offsetX - this.props.start_X),(e.nativeEvent.offsetY - this.props.start_Y));
       }
     }
   }
@@ -172,6 +172,9 @@ class Canvas extends React.Component {
         this.drawing = false;
         this.refs.myCanvas.style.cursor = "default";
         this.props.setROI();
+        if(this.props.activeBkgnd===true){ //if there is a bkg before ROI, then we need to reset it because of changes in dimensions.
+          this.props.updateBackground();
+        }
       }
   }
 
@@ -262,6 +265,7 @@ function mapStateToProps(state) {
     calib_x:state.options.calib_x,
     calib_y:state.options.calib_y,
     imageSrc:state.canvas.imageSrc,
+    activeBkgnd: state.video.activeBkgnd,
   };
 }
 
@@ -274,6 +278,7 @@ function mapDispatchToProps(dispatch) {
     setROI: bindActionCreators(setROI, dispatch),
     updateDimensions:bindActionCreators(updateDimensions, dispatch),
     resetCrosshair: bindActionCreators(resetCrosshair, dispatch),
+    updateBackground: bindActionCreators(updateBackground,dispatch),
   };
 }
 

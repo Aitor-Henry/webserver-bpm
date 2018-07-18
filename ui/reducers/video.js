@@ -25,14 +25,17 @@ export default function video(state = initialState, action) {
         return Object.assign({}, state, {backgroundstate: 0, activeBkgnd:true})
       }
     }
+
     case 'LINEAR_CLICKED':
     {
       return Object.assign({}, state, {selectedLut:"Linear"})
     }
+
     case 'LOGARITHMIC_CLICKED':
     {
       return Object.assign({}, state, {selectedLut:"Logarithmic"})
     }
+
     case 'AUTOSCALE_CHECKED':
     {
       if(state.autoscaleCheckedBool === 0){
@@ -41,8 +44,8 @@ export default function video(state = initialState, action) {
       else{
         return Object.assign({}, state, {autoscaleCheckedBool : 0})
       }
-
     }
+
     case 'TEMPERATURE_CHECKED':
     {
       if(state.temperatureCheckedBool === 0){
@@ -51,8 +54,6 @@ export default function video(state = initialState, action) {
       else{
         return Object.assign({}, state, {temperatureCheckedBool : 0})
       }
-
-
     }
 
     case 'Y_CHECKED':
@@ -63,20 +64,16 @@ export default function video(state = initialState, action) {
       else{
         return Object.assign({}, state, {yCheckedBool : 0})
       }
-
-
     }
 
     case 'TEXT_ENTER_MAX':
     {
       return Object.assign({}, state, {maxValue : action.text})
-
     }
 
     case 'TEXT_EMPTY_MAX':
     {
       return Object.assign({}, state, {maxValue : ""})
-
     }
 
     case 'BACKGROUND_STATE':
@@ -87,8 +84,6 @@ export default function video(state = initialState, action) {
       else{
         return Object.assign({}, state, {backgroundstate: 1, activeBkgnd:false})
       }
-
-
     }
 
     case 'SET_ROI':
@@ -99,8 +94,11 @@ export default function video(state = initialState, action) {
       else{
         return Object.assign({}, state, {activeROI:true})
       }
+    }
 
-
+    case 'SET_ROI_DONE' :
+    {
+      return Object.assign({}, state, {activeROI:false})
     }
 
     case 'SET_CROSSHAIR':
@@ -111,15 +109,11 @@ export default function video(state = initialState, action) {
       else{
         return Object.assign({}, state, {crosshair: 1, activeCrosshair:true})
       }
-
-
     }
 
     case 'ROTATION':
     {
-
       return Object.assign({}, state, {rotation:(state.rotation+action.rotation)%360})
-
     }
 
     default:

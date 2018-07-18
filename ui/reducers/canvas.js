@@ -58,7 +58,7 @@ export default function canvas(state = initialState, action) {
 
     case 'SET_ROI_DONE' :
     {
-      return Object.assign({}, state, {alertHidden:false,start_X:undefined, start_Y:undefined,prevX:undefined, prevY:undefined,resetDesactivated:false, imageMaxHeight: state.height, imageMaxWidth: state.width})
+      return Object.assign({}, state, {alertHidden:false,start_X:undefined, start_Y:undefined,prevX:undefined, prevY:undefined,resetDesactivated:false, imageMaxHeight: state.height, imageMaxWidth: state.width, })
     }
     case 'HIDE_ALERT' :
     {

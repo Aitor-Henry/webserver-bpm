@@ -88,10 +88,13 @@ class Video extends React.Component {
 
   resetROI(){
     this.props.resetRoi();
-    if(this.props.activeCrosshair){
+    /*if(this.props.activeCrosshair){
       this.crosshair();
-    }
+    }*/
     this.props.resetCrosshair();
+    if(this.props.activeBkgnd===true){ //if there is a bkg when we reset ROI, then we need to reset it because of changes in dimensions.
+      this.background();
+    }
   }
 
   rotation(rotate){
