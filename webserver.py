@@ -43,9 +43,8 @@ WEB_QUERIES = gevent.queue.Queue()
 class BV:
 
   def __init__(self):
-    self.bvdata = None
+    #self.bvdata = None
     self.cameras_running = {}
-    
     self.event_counter = 0
     self.handle_webserver_queries()
     
@@ -188,16 +187,17 @@ class BV:
         self.cameras_running[query["camera_name"]][1].calibration = ([float(query["calib_x"]), float(query["calib_y"])])
         self.setExposuretime(float(query["exp_t"]),query["camera_name"])
         self.setAcqRate(float(query["acq_rate"]),query["camera_name"])
-        if self.cameras_running[query["camera_name"]][0].ready_for_next_image==False:
-          print "stopping live"
-          self.cameras_running[query["camera_name"]][0].video_live=False
-          self.cameras_running[query["camera_name"]][0].stopAcq()
+
         if bool(int(query["live"])):
-          self.cameras_running[query["camera_name"]][0].video_live=True
+          if not(self.getAcqStatus(query["camera_name"])=='Running'):
+            self.cameras_running[query["camera_name"]][0].video_live=True
         else:
-          self.cameras_running[query["camera_name"]][0].acq_nb_frames = 1
-          self.cameras_running[query["camera_name"]][0].prepareAcq()
-          self.cameras_running[query["camera_name"]][0].startAcq()
+          if self.getAcqStatus(query["camera_name"])=='Running':
+            self.cameras_running[query["camera_name"]][0].video_live=False
+          else:
+            self.cameras_running[query["camera_name"]][0].acq_nb_frames = 1
+            self.cameras_running[query["camera_name"]][0].prepareAcq()
+            self.cameras_running[query["camera_name"]][0].startAcq()
         query["event"].set()
 
       elif query["query"] == "update_calibration":
@@ -345,7 +345,6 @@ def set_background(camera):
 #######TO DIALOGUE WITH WEBSOCKET FROM FRONT END SIDE#######
 @bottle.get('/:camera/api/image_channel', apply=[websocket])
 def provide_images(ws,camera):
-  #import pdb; pdb.set_trace()
   while True:
     client_id = ws.receive()
     if client_id is not None:
@@ -363,4 +362,3 @@ def provide_images(ws,camera):
 if __name__=="__main__":
     gevent.spawn(BV)
     webserver_main(HOST,PORT)
-#    gevent.wait()
