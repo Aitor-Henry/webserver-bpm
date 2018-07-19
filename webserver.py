@@ -1,3 +1,6 @@
+# https://github.com/tango-controls/pytango/blob/develop/examples/asyncio_green_mode/tcp_server_example.py
+# some exemple
+
 import os
 import gevent
 import gevent.event
@@ -8,6 +11,7 @@ import socket
 import json
 import time
 import PyTango
+from tango.gevent import DeviceProxy
 import struct
 from bottle.ext.websocket import GeventWebSocketServer
 from bottle.ext.websocket import websocket
@@ -17,9 +21,6 @@ except ImportError:
     os.environ["QUB_SUBPATH"]="qt4"
     from Qub.CTools import pixmaptools
 import logging
-
-import threading
-
 
 # patch socket module
 socket.socket._bind = socket.socket.bind
@@ -36,11 +37,11 @@ socket.socket.bind = my_socket_bind
 HOMEPAGE_TITLE = "BPM Monitor"
 HOST = socket.gethostname()
 PORT=8066 #defined arbitrarly
-WEB_QUERIES = gevent.queue.Queue()
+WEB_QUERIES = gevent.queue.Queue() # not sure you will stay
 
 
 #Class BV, talks to Tango devices and bottle app.
-class BV:
+class BV: #How the class will be use now ? since 
 
   def __init__(self):
     #self.bvdata = None
@@ -225,29 +226,9 @@ class BV:
 
 
 
-def get_query():
-    global WEB_QUERIES
-    if WEB_QUERIES is None:
-        WEB_QUERIES = gevent.queue.Queue()
-    return_query = WEB_QUERIES.get()
-    return return_query
-
-def query(name, **kwargs):
-    reply = {}
-    event = gevent.event.Event()
-    query = { "query": name, "reply": reply, "event": event }
-    query.update(kwargs)
-    WEB_QUERIES.put(query)
-    event.wait()
-    return reply
-
-
-def webserver_main(hostname,portnumber):
-  bottle.run(server=GeventWebSocketServer, host=hostname, port=portnumber)
-
 
 ######### BOTTLE ROUTES #########
-@bottle.route("/")
+@bottle.route("/") # this one is good i guess
 def index():
   tango_db = PyTango.DeviceProxy("sys/database/2")
   limaccds_devices_name=[]
@@ -275,30 +256,29 @@ def index():
   return reply
 
 
-@bottle.route('/webpack_output/<filename>')
+@bottle.route('/webpack_output/<filename>') # this one only serving the bundle.js, so fine too i guess
 def server_static(filename):
     f = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'webpack_output/')
     return bottle.static_file(filename, root=f)
 
 @bottle.route("/:camera/")
 def get_camera_page(camera):
-
+  # some work to do here ? spawn greenlets or already deal by bottle ?
   return bottle.static_file("index.html", root=os.path.dirname(os.path.abspath(__file__)))
 
 
-########--------------------------------------------------------------------------------------########
+########--------------------------------------------------------------------------------------######## Keep this ? since query() system might be delete.
 @bottle.get('/:camera/api/get_status')
 def get_status(camera):
   return query("get_status", camera_name=camera)
 
 @bottle.get("/:camera/api/set_roi")
 def set_roi(camera):
-  res = query("set_roi",  camera_name=camera,
+  return query("set_roi",  camera_name=camera,
                           x=int(bottle.request.GET["x"]),
                           y=int(bottle.request.GET["y"]),
                           w=int(bottle.request.GET["w"]),
                           h=int(bottle.request.GET["h"]))
-  return res
 
 @bottle.get("/:camera/api/get_beam_position")
 def acquire(camera):
@@ -342,7 +322,7 @@ def set_background(camera):
   return query("set_background", camera_name=camera,
                                  backgroundstate=bottle.request.GET["backgroundstate"])
 
-#######TO DIALOGUE WITH WEBSOCKET FROM FRONT END SIDE#######
+#######TO DIALOGUE WITH WEBSOCKET FROM FRONT END SIDE####### Definitively need to change that, how ws will handle different client (cameras) ? need to change client code (way of sending queries) ? 
 @bottle.get('/:camera/api/image_channel', apply=[websocket])
 def provide_images(ws,camera):
   while True:
@@ -360,5 +340,5 @@ def provide_images(ws,camera):
 ###############################################################
 
 if __name__=="__main__":
-    gevent.spawn(BV)
-    webserver_main(HOST,PORT)
+  bottle.run(server=GeventWebSocketServer, host=hostname, port=portnumber)
+
