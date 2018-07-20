@@ -4,13 +4,14 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import {updateData,setBeamMark,setROIMark,setPrevROIMark,setROI,updateDimensions, resetCrosshair} from '../actions/canvas.js'
 import {updateBackground} from '../actions/video.js'
+import {setImgDisplay} from '../actions/options.js'
 
 
 class Canvas extends React.Component {
   constructor(props) {
     super(props);
-    this.img_socket = null;
-    this.registerChannel = this.registerChannel.bind(this);
+    //this.img_socket = null;
+    //this.registerChannel = this.registerChannel.bind(this);
     this.updateImage=this.updateImage.bind(this);
     this.image = new Image();
     this.updateData = this.updateData.bind(this);
@@ -28,17 +29,17 @@ class Canvas extends React.Component {
       if(this.liveState==true){
         this.liveState=false
       }
-      this.registerChannel();
+      //this.registerChannel();
     } else if((nextProps.acqImage!=0 || nextProps.liveRun!=0) && (nextProps.acqImage!=this.props.acqImage || nextProps.liveRun!=0)){
       if(nextProps.liveRun===1){
         this.liveState=true;
       } else {
         this.liveState=false;
       }
-      if(nextProps.liveRun==1 && this.props.liveRun==1){
+      /*if(nextProps.liveRun==1 && this.props.liveRun==1){
       } else {
         this.Askimage();
-      }      
+      }*/
     };
     
   }
@@ -48,11 +49,13 @@ class Canvas extends React.Component {
   }
 
   componentDidUpdate(nextProps){
-    if((nextProps.acqImage!=0 || nextProps.liveRun!=0) || (this.props.beam_markX!=nextProps.beam_markX && this.props.beam_markY!=nextProps.beam_markY) || (this.props.rotation!=nextProps.rotation)){
-      console.log("COMPONENTDIDUPDATE")
+    /*if((nextProps.acqImage!=0 || nextProps.liveRun!=0) || (this.props.beam_markX!=nextProps.beam_markX && this.props.beam_markY!=nextProps.beam_markY) || (this.props.rotation!=nextProps.rotation)){
+      this.updateImage(nextProps);
+    }*/
+    if(this.props.imageSrc!=nextProps.imageSrc || (this.props.beam_markX!=nextProps.beam_markX && this.props.beam_markY!=nextProps.beam_markY) || (this.props.rotation!=nextProps.rotation)){
       this.updateImage(nextProps);
     }
-    
+
     
   }
 
@@ -123,7 +126,8 @@ class Canvas extends React.Component {
       ctx.restore();
     }
     if(this.liveState === true){
-      this.closeSocket();
+      console.log("should be passing here");
+      this.props.setImgDisplay();
     }
     this.image.src = "data:image/jpg;base64,"+src;
   }
@@ -135,7 +139,6 @@ class Canvas extends React.Component {
       this.props.setROIMark(e.nativeEvent.offsetX,e.nativeEvent.offsetY)
     }
   }
-
 
   handleMouseMove(e){
    if(this.props.activeROI && this.drawing === true){
@@ -187,7 +190,7 @@ class Canvas extends React.Component {
   updateDimensions(){
     this.props.updateDimensions(window.innerWidth,window.innerHeight);
   }
-
+  /*
   registerChannel(){
     if (this.img_socket === null) {
       let ws_address;
@@ -206,7 +209,7 @@ class Canvas extends React.Component {
       }
     }
   }
-
+  
   closeSocket(){  
     if(this.img_socket != null){
       this.img_socket.close();
@@ -226,7 +229,7 @@ class Canvas extends React.Component {
     this.img_socket.onmessage = (packed_msg) => {
       this.updateData(JSON.parse(packed_msg.data));
     }
-  }
+  }*/
 
 
 
@@ -279,6 +282,7 @@ function mapDispatchToProps(dispatch) {
     updateDimensions:bindActionCreators(updateDimensions, dispatch),
     resetCrosshair: bindActionCreators(resetCrosshair, dispatch),
     updateBackground: bindActionCreators(updateBackground,dispatch),
+    setImgDisplay:bindActionCreators(setImgDisplay,dispatch),
   };
 }
 

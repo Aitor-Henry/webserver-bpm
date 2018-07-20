@@ -3,15 +3,15 @@ export function setImgDisplay(){
 
   return (dispatch,getState) => {
     const state = getState()
-    fetch('/'+state.bpmState.client_id+'/api/img_display_config?color_map='+state.video.temperatureCheckedBool+'&autoscale='+state.video.autoscaleCheckedBool+'&autoscale_option='+state.video.selectedLut+'&x='+state.options.calib_x+'&y='+state.options.calib_y+'&live='+state.options.liveCheckedBool+'&exp_t='+state.options.exposureTimeValue+'&acq_rate='+state.options.samplingRateValue)
+    fetch('/'+state.bpmState.client_id+'/api/img_display_config?color_map='+state.video.temperatureCheckedBool+'&autoscale='+state.video.autoscaleCheckedBool+'&lut_method='+state.video.selectedLut+'&calib_x='+state.options.calib_x+'&calib_y='+state.options.calib_y+'&live='+state.options.liveCheckedBool+'&exp_t='+state.options.exposureTimeValue+'&acq_rate='+state.options.samplingRateValue)
       .then((response) => {
         if(!response.ok){
           throw Error(response.statusText);
         }
-
         return response;
-      }) .then(response => dispatch(buttonAcquirePressed()))
-         .catch(() => alert('Error, please check server console, setImgDisplay'))
+      }).then(response => response.json()) 
+        .then(response => dispatch(buttonAcquirePressed(response)))
+        .catch(() => alert('Error, please check server console, setImgDisplay'))
   }
 }
 
@@ -30,8 +30,8 @@ export function update_calibration_apply(){ // Set calibration in Bpm device
   }
 }
 
-export function buttonAcquirePressed(){
-  return { type: 'BUTTON_ACQUIRE_PRESSED'}
+export function buttonAcquirePressed(data){
+  return { type: 'BUTTON_ACQUIRE_PRESSED',data}
 }
 
 
