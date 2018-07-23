@@ -3,7 +3,7 @@ import ReactDom from 'react-dom';
 import { Navbar,Nav,NavItem,NavDropdown,MenuItem,Form,FormGroup,FormControl,Col,ControlLabel,Button,Glyphicon,DropdownButton,} from 'react-bootstrap';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import {buttonAcquirePressed,textEnterExposure,textEnterSampling,textEmptyExposure,textEmptySampling,liveChecked,textEnterCalib_X,textEnterCalib_Y,textEmptyX,textEmptyY,setImgDisplay,update_calibration_apply} from '../actions/options.js'
+import {latencyTimeNotInRange,exposureTimeNotInRange,buttonAcquirePressed,textEnterExposure,textEnterSampling,textEmptyExposure,textEmptySampling,liveChecked,textEnterCalib_X,textEnterCalib_Y,textEmptyX,textEmptyY,setImgDisplay,update_calibration_apply} from '../actions/options.js'
 import Dropdown from '../components/dropdown.js'
 
 class Options extends React.Component {
@@ -23,7 +23,11 @@ class Options extends React.Component {
   textStateExposure(){
 
     if(ReactDom.findDOMNode(this.refs.exposure).value > -0.01){ // if >0, can't write "0,xxx" because of the first 0
-      this.props.textEnterExposure(ReactDom.findDOMNode(this.refs.exposure).value);
+      if(ReactDom.findDOMNode(this.refs.exposure).value >this.props.maxExposureTime || ReactDom.findDOMNode(this.refs.exposure).value<this.props.minExposureTime){
+        this.props.exposureTimeNotInRange();
+      }else{
+        this.props.textEnterExposure(ReactDom.findDOMNode(this.refs.exposure).value);
+      }
     }
     else {
       this.props.textEmptyExposure(); 
@@ -33,8 +37,12 @@ class Options extends React.Component {
   textStateSampling(){
 
     if(ReactDom.findDOMNode(this.refs.sampling).value > -0.01 && ReactDom.findDOMNode(this.refs.sampling).value<=(1.0/this.props.exposureTimeValue)){
+      if(this.props.exposureTimeValue - (1/ReactDom.findDOMNode(this.refs.sampling).value) > this.props.maxLatencyTime || this.props.exposureTimeValue - (1/ReactDom.findDOMNode(this.refs.sampling).value) < this.props.minLatencyTime){
+        this.props.latencyTimeNotInRange();
 
-      this.props.textEnterSampling(ReactDom.findDOMNode(this.refs.sampling).value);
+      }else{
+        this.props.textEnterSampling(ReactDom.findDOMNode(this.refs.sampling).value);
+      }
     }
     else{
       this.props.textEmptySampling();
@@ -63,7 +71,10 @@ class Options extends React.Component {
   }
 
   buttonAcquirePressed(){
+    this.props.buttonAcquirePressed();
+    //if(this.props.liveRun===0){
     this.props.setImgDisplay();
+    //}
   }
 
 
@@ -148,6 +159,10 @@ function mapStateToProps(state) {
     liveRun: state.options.liveRun,
     beam_markX:state.canvas.beam_markX,
     beam_markY:state.canvas.beam_markY,
+    minExposureTime:state.options.minExposureTime,
+    maxExposureTime:state.options.maxExposureTime,
+    minLatencyTime : state.options.minLatencyTime,
+    maxLatencyTime : state.options.maxLatencyTime,
   };
 }
 
@@ -164,8 +179,9 @@ function mapDispatchToProps(dispatch) {
     textEmptyX:bindActionCreators(textEmptyX, dispatch),
     textEmptyY:bindActionCreators(textEmptyY, dispatch),
     setImgDisplay:bindActionCreators(setImgDisplay,dispatch),
-    update_calibration_apply : bindActionCreators(update_calibration_apply,dispatch),
-
+    update_calibration_apply:bindActionCreators(update_calibration_apply,dispatch),
+    latencyTimeNotInRange:bindActionCreators(latencyTimeNotInRange,dispatch),
+    exposureTimeNotInRange:bindActionCreators(exposureTimeNotInRange,dispatch),
   };
 }
 

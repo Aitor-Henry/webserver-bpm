@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDom from 'react-dom'
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import {updateData,setBeamMark,setROIMark,setPrevROIMark,setROI,updateDimensions, resetCrosshair} from '../actions/canvas.js'
+import {setBeamMark,setROIMark,setPrevROIMark,setROI,updateDimensions, resetCrosshair} from '../actions/canvas.js'
 import {updateBackground} from '../actions/video.js'
 import {setImgDisplay} from '../actions/options.js'
 
@@ -14,17 +14,16 @@ class Canvas extends React.Component {
     //this.registerChannel = this.registerChannel.bind(this);
     this.updateImage=this.updateImage.bind(this);
     this.image = new Image();
-    this.updateData = this.updateData.bind(this);
     this.draw_Beam_Marker = this.draw_Beam_Marker.bind(this);
     this.handleMouseDown = this.handleMouseDown.bind(this);
     this.handleMouseMove = this.handleMouseMove.bind(this);
     this.draw_ROI_Marker = this.draw_ROI_Marker.bind(this);
     this.drawing = false;
-    this.liveState = false;
+    //this.liveState = false;
 
   }
 
-  componentWillReceiveProps(nextProps){
+  /*componentWillReceiveProps(nextProps){
     if(nextProps.acqImage==0 && nextProps.liveRun==0){
       if(this.liveState==true){
         this.liveState=false
@@ -36,13 +35,13 @@ class Canvas extends React.Component {
       } else {
         this.liveState=false;
       }
-      /*if(nextProps.liveRun==1 && this.props.liveRun==1){
+      if(nextProps.liveRun==1 && this.props.liveRun==1){
       } else {
         this.Askimage();
-      }*/
+      }
     };
     
-  }
+  }*/
 
   componentDidMount(){
     window.addEventListener("resize", this.updateDimensions.bind(this));
@@ -52,7 +51,8 @@ class Canvas extends React.Component {
     /*if((nextProps.acqImage!=0 || nextProps.liveRun!=0) || (this.props.beam_markX!=nextProps.beam_markX && this.props.beam_markY!=nextProps.beam_markY) || (this.props.rotation!=nextProps.rotation)){
       this.updateImage(nextProps);
     }*/
-    if(this.props.imageSrc!=nextProps.imageSrc || (this.props.beam_markX!=nextProps.beam_markX && this.props.beam_markY!=nextProps.beam_markY) || (this.props.rotation!=nextProps.rotation)){
+  
+    if((this.props.img_num!=nextProps.img_num) || this.props.liveRun===1 || (this.props.acqImage!=0) || (this.props.beam_markX!=nextProps.beam_markX && this.props.beam_markY!=nextProps.beam_markY) || (this.props.rotation!=nextProps.rotation)){
       this.updateImage(nextProps);
     }
 
@@ -125,8 +125,7 @@ class Canvas extends React.Component {
       }
       ctx.restore();
     }
-    if(this.liveState === true){
-      console.log("should be passing here");
+    if(this.props.liveRun === 1){
       this.props.setImgDisplay();
     }
     this.image.src = "data:image/jpg;base64,"+src;
@@ -181,11 +180,6 @@ class Canvas extends React.Component {
       }
   }
 
-
-
-  updateData(data){
-    this.props.updateData(data);
-  }
 
   updateDimensions(){
     this.props.updateDimensions(window.innerWidth,window.innerHeight);
@@ -274,7 +268,6 @@ function mapStateToProps(state) {
 
 function mapDispatchToProps(dispatch) {
   return {
-    updateData : bindActionCreators(updateData, dispatch),
     setBeamMark : bindActionCreators(setBeamMark, dispatch),
     setROIMark : bindActionCreators(setROIMark, dispatch),
     setPrevROIMark : bindActionCreators(setPrevROIMark, dispatch),

@@ -1,9 +1,3 @@
-
-export function updateData(data){
-  return { type: 'UPDATE_DATA',data}
-}
-
-
 export function setROIMark(X,Y){
   return { type: 'SET_ROI_MARK',X,Y}
 }

@@ -16,7 +16,10 @@ const initialState = {
   saveValue: 0,
   applyDisabled : false,
   saveDisabled : false,
-
+  minExposureTime : 0,
+  maxExposureTime : 0,
+  minLatencyTime : 0,
+  maxLatencyTime : 0,
 };
 
 
@@ -27,18 +30,18 @@ export default function options(state = initialState, action) {
     
     case 'GET_STATUS_DONE':
     {
-      return Object.assign({}, state, {liveCheckedBool:Number(action.status.live), exposureTimeValue:action.status.exposure_time, samplingRateValue:action.status.acq_rate , calib_x:action.status.calib_x, calib_y:action.status.calib_y})
+      return Object.assign({}, state, {minExposureTime:action.status.min_exposure_time, maxExposureTime:action.status.max_exposure_time, minLatencyTime:action.status.min_latency_time, maxLatencyTime:action.status.max_latency_time,liveCheckedBool:Number(action.status.live), exposureTimeValue:action.status.exposure_time, samplingRateValue:action.status.acq_rate , calib_x:action.status.calib_x, calib_y:action.status.calib_y})
     }
 
     case 'BUTTON_ACQUIRE_PRESSED':
     {
-      if(state.buttonAcquireStyle === 'success' && state.liveCheckedBool == 1){
+      if(state.buttonAcquireStyle === 'success' && state.liveCheckedBool == 1){ // User start a live mode
         return Object.assign({}, state, {buttonAcquireStyle:'danger',buttonAcquireText:"Stop",buttonAcquireGlyphiconText:"stop",liveCheckedBool: 0, liveRun:1, acqImage: 0})
       }
-      else if(state.buttonAcquireStyle === 'danger' && state.liveCheckedBool == 0){
+      else if(state.buttonAcquireStyle === 'danger' && state.liveCheckedBool == 0){ // User stop live mode
         return Object.assign({}, state, {buttonAcquireStyle:'success',buttonAcquireText:"Acquire",buttonAcquireGlyphiconText:"play", liveSet: 0, liveRun: 0, acqImage: 0})
       }
-      else {
+      else { // User start an acquisition of one frame
         return Object.assign({}, state, {buttonAcquireStyle:'success',buttonAcquireText:"Acquire",buttonAcquireGlyphiconText:"play", acqImage: state.acqImage+1, liveRun: 0})
       }
 
@@ -106,6 +109,16 @@ export default function options(state = initialState, action) {
     case 'TEXT_EMPTY_Y':
     {
       return Object.assign({}, state, {calib_y:"",applyDisabled:true,saveDisabled:true})
+    }
+
+    case 'LATENCY_NOT_IN_RANGE':
+    {
+      alert("You try to create a latency time ((1/AcquisitonRate)-ExposureTime) not in range with the specs of the camera, this value should be in range of [",state.minLatencyTime,",",state.maxLatencyTime,"]. For further questions call Laurent CLAUTRE (2912). "); 
+    }
+
+    case 'EXPOSURE_TIME_NOT_IN_RANGE':
+    {
+      alert("You try to create a exposure time not in range with the specs of the camera, this value should be in range of [",state.minExposureTime,",",state.maxExposureTime,"]. For further questions call Laurent CLAUTRE (2912).");
     }
 
     case 'UPDATE_CALIBRATION_APPLY_DONE':

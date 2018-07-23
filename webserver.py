@@ -1,6 +1,7 @@
 import os
 from gevent import monkey; monkey.patch_all()
 import gevent
+import gevent.queue
 import time
 import bottle
 import socket
@@ -42,8 +43,8 @@ class BVWebserver:
     self.port = port
     self.app = bottle.Bottle()
     self.register_routes()
-    self.limaccds_device=None
-    self.bpm_device=None
+    #self.limaccds_device=None
+    #self.bpm_device=None
     self.event_counter = 0
     self.cameras_running = {}
 
@@ -56,12 +57,14 @@ class BVWebserver:
 
 
   def camera_init(self,camera_name): 
-
-    reply=None
     if not(self.cameras_running.has_key(camera_name)):
+      self.event_counter = 0
+      reply=None
+      #event = gevent.event.Event()
       tango_device = self.find_tango_device(camera_name)
       limaccds_device = PyTango.DeviceProxy(tango_device)
       bpm_device = PyTango.DeviceProxy(limaccds_device.getPluginDeviceNameFromType('bpm'))
+      bpm_device.subscribe_event('bvdata', PyTango.EventType.CHANGE_EVENT, self.decode_bvdata, [])
       bpm_device.Start()
       dict_to_add = {camera_name : [limaccds_device, bpm_device, reply]}
       self.cameras_running.update(dict_to_add)
@@ -71,8 +74,7 @@ class BVWebserver:
 
   """Methods used in handle_web_queries()"""
 
-
-  def decode_bvdata(self,bvdata_read):
+  def decode_bvdata(self,evt_bvdata):
     """Callback function from the subscribe_event on bvdata"""
 
     def ListStrToListInt(list_str):
@@ -83,16 +85,33 @@ class BVWebserver:
         list_tuples_int.append(int(list_int_clean[i]))
       return list_tuples_int
     
-    bv_data=bvdata_read[1]
+    if self.event_counter==0:
+      print "Subscribing to bvdata push event..."
+    else:
+      camera_name=evt_bvdata.attr_name.split("/")[-2]
+      bv_data=evt_bvdata.attr_value.value[1]
+      HEADER_FORMAT=evt_bvdata.attr_value.value[0]
+      (timestamp,framenb,
+        X,Y,I,maxI,roi_top_x,roi_top_y,
+        roi_size_getWidth,roi_size_getHeight,
+        fwhm_x,fwhm_y,list_int_profile_x,list_int_profile_y, jpegData) = struct.unpack(HEADER_FORMAT, bv_data)
+      profile_x=ListStrToListInt(list_int_profile_x)
+      profile_y=ListStrToListInt(list_int_profile_y)
+      result_array = {"framenb" : framenb, "X" : X, "Y" : Y, "I" : I, "fwhm_x" : fwhm_x, "fwhm_y" : fwhm_y,  "jpegData" : jpegData, "profile_x" : profile_x, "profile_y" : profile_y}
+      self.cameras_running[camera_name][2] = result_array
+
+
+    """bv_data=bvdata_read[1]
     HEADER_FORMAT=bvdata_read[0]
     (timestamp,framenb,
       X,Y,I,maxI,roi_top_x,roi_top_y,
       roi_size_getWidth,roi_size_getHeight,
       fwhm_x,fwhm_y,list_int_profile_x,list_int_profile_y, jpegData) = struct.unpack(HEADER_FORMAT, bv_data)
+    print "length profiles : ", len(list_int_profile_x), len(list_int_profile_y)
     profile_x=ListStrToListInt(list_int_profile_x)
     profile_y=ListStrToListInt(list_int_profile_y)
     result_array = {"framenb" : framenb, "X" : X, "Y" : Y, "I" : I, "fwhm_x" : fwhm_x, "fwhm_y" : fwhm_y,  "jpegData" : jpegData, "profile_x" : profile_x, "profile_y" : profile_y}
-    return result_array
+    return result_array"""
 
 
   def getExposuretime(self,camera_name):
@@ -123,13 +142,14 @@ class BVWebserver:
   def getDimensionImage(self,camera_name):
     return (self.cameras_running[camera_name][0].image_width,self.cameras_running[camera_name][0].image_height)
 
+
   def handle_web_queries(self,camera,query):
     self.camera_init(camera)
     print "------------------------NEXT QUERY-----------------------"
-    print "Query name : ", query
-
+    print query
+    self.event_counter = 1
+    #self.cameras_running[camera][2]=None
     if query == "get_status":
-      print self.cameras_running
       reply = { "exposure_time": self.getExposuretime(camera),
                 "live": True if self.getAcqStatus(camera)=='Running' else False,
                 "roi": self.HasRoi(camera),
@@ -142,7 +162,11 @@ class BVWebserver:
                 "calib_y":  self.cameras_running[camera][1].calibration[1],
                 "background": self.cameras_running[camera][1].HasBackground(),
                 "beam_mark_x": float(self.cameras_running[camera][1].beammark[0]),
-                "beam_mark_y": float(self.cameras_running[camera][1].beammark[1])}
+                "beam_mark_y": float(self.cameras_running[camera][1].beammark[1]),
+                "min_exposure_time": self.cameras_running[camera][0].valid_ranges[0],
+                "max_exposure_time": self.cameras_running[camera][0].valid_ranges[1],
+                "min_latency_time": self.cameras_running[camera][0].valid_ranges[2],
+                "max_latency_time": self.cameras_running[camera][0].valid_ranges[3]}
 
 
       return reply
@@ -168,20 +192,36 @@ class BVWebserver:
       self.setExposuretime(float(bottle.request.query.exp_t),camera)
       self.setAcqRate(float(bottle.request.query.acq_rate),camera)
 
-      if bool(int(bottle.request.query.live)):
-        if not(self.getAcqStatus(camera)=='Running'):
+      if bool(int(bottle.request.query.live)): #Asking for live
+        if not(self.getAcqStatus(camera)=='Running'): #if camera not already in live mode then we start live
+          print "STARTING LIVE"
           self.cameras_running[camera][0].video_live=True
-      else:
-        if self.getAcqStatus(camera)=='Running':
+      else: #Not live, only one acquisition
+        print(self.getAcqStatus(camera))
+        if self.getAcqStatus(camera)=='Running': #if camera running live mode, we stop it.
+          print "STOPPING LIVE"
           self.cameras_running[camera][0].video_live=False
+          return {"stopLive" : True}
         else:
-          self.cameras_running[camera][0].acq_nb_frames = 1
+          print "ACQUISITION"
+          self.cameras_running[camera][0].acq_nb_frames = 1 #otherwise we start a 1 frame acq
           self.cameras_running[camera][0].prepareAcq()
           self.cameras_running[camera][0].startAcq()
-      time.sleep((1/self.getAcqRate(camera))+0.5)
-      bvdata = self.cameras_running[camera][1].bvdata
-      self.cameras_running[camera][2] = self.decode_bvdata(bvdata)
-      return self.cameras_running[camera][2]
+      
+      #self.event_handler.wait()
+      while self.cameras_running[camera][2]==None:
+        gevent.sleep((1/self.getAcqRate(camera))/10)
+
+      #bvdata = self.cameras_running[camera][1].bvdata
+      #self.cameras_running[camera][2] = self.decode_bvdata(bvdata)
+
+      reply = self.cameras_running[camera][2] # should contain bvdata at this point
+      if bottle.request.query.beammark_x!="undefined" and bottle.request.query.beammark_y!="undefined":
+        I = self.cameras_running[camera][1].GetPixelIntensity([int(bottle.request.query.beammark_x),int(bottle.request.query.beammark_y)])
+        reply.update({ "intensity": I })
+      reply.update({ "stopLive" : False})
+      self.cameras_running[camera][2]=None
+      return reply
       
 
     elif query == "update_calibration":
@@ -203,7 +243,7 @@ class BVWebserver:
           if self.getAcqStatus(camera)=='Running':
             raise RuntimeError, "Acquisition has not finished (or Live mode is on)"
           else:
-            self.cameras_running[camera][1].TakeBackground() # same stuff, need to see how to handle this.
+            self.cameras_running[camera][1].TakeBackground()
         else:
           self.cameras_running[camera][1].ResetBackground()
         
