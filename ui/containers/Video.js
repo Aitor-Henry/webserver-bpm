@@ -3,8 +3,9 @@ import ReactDom from 'react-dom';
 import { Navbar,Nav,NavItem,NavDropdown,MenuItem,Form,FormGroup,FormControl,Col,ControlLabel,Button,Tab,Tabs,Radio,dropdown,DropdownButton,ButtonGroup,Checkbox,Glyphicon,Image,OverlayTrigger,Overlay,Tooltip,SplitButton } from 'react-bootstrap';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import {linearClicked,logarithmicClicked,autoscaleChecked,temperatureChecked,yChecked,textEmptyMax,textEnterMax,updateBackground,setCrosshair,setRoi,rotation} from '../actions/video.js'
+import {linearClicked,logarithmicClicked,autoscaleChecked,temperatureChecked,yChecked,updateBackground,setCrosshair,setRoi,rotation} from '../actions/video.js'
 import {resetRoi,resetCrosshair,switchDimensions} from '../actions/canvas.js'
+import {setImgDisplay} from '../actions/options.js'
 import Dropdown from '../components/dropdown.js'
 import Canvas from '../components/canvas.js'
 import Dygraph from 'dygraphs'
@@ -18,7 +19,6 @@ class Video extends React.Component {
     this.autoscaleChecked=this.autoscaleChecked.bind(this);
     this.temperatureChecked=this.temperatureChecked.bind(this);
     this.yChecked = this.yChecked.bind(this);
-    this.textStateMax = this.textStateMax.bind(this);
     this.crosshair = this.crosshair.bind(this);
     this.background = this.background.bind(this);
     this.roi = this.roi.bind(this);
@@ -57,15 +57,6 @@ class Video extends React.Component {
     this.props.yChecked();
   }
 
-  textStateMax(){
-    if(ReactDom.findDOMNode(this.refs.max).textLength > 0){
-      this.props.textEnterMax(ReactDom.findDOMNode(this.refs.max).value);
-    }
-    else{
-      this.props.textEmptyMax();
-    }
-  }
-
   crosshair(){
     this.props.setCrosshair();
   }
@@ -95,6 +86,7 @@ class Video extends React.Component {
     if(this.props.activeBkgnd===true){ //if there is a bkg when we reset ROI, then we need to reset it because of changes in dimensions.
       this.background();
     }
+    this.props.setImgDisplay();
   }
 
   rotation(rotate){
@@ -112,8 +104,8 @@ class Video extends React.Component {
   graph(){
     
     var data = [];
-    for(let i=0;i != this.props.profileX.length;i++){
-      data.push([i,this.props.profileX[i]]);
+    for(let i=0;i <= this.props.profileX.length;i=i+2){
+      data.push([this.props.profileX[i], this.props.profileX[i+1]]);
     }
     
     var g = new Dygraph(document.getElementById("graph1"), data,
@@ -124,25 +116,23 @@ class Video extends React.Component {
               legend : 'never',
               dateWindow : [0, this.props.profileX.length],
               labels: ['Time', 'Random'],
-              /*axes: {
-                x: {
-                  axisLabelFormatter: function(x) {
-                    return '';
-                  }
-                },
+              width : this.props.windowWidth,
+              height : this.props.windowHeight/3,
+              axes: {
                 y: {
                   axisLabelFormatter: function(y) {
                     return '';
                   }
                 }
-              }*/
+              }
             });
             
 
 
     var data2 = [];
-    for(let i=0;i != this.props.profileY.length;i++){
-      data2.push([i,this.props.profileY[i]])
+    console.log(this.props.profileY);
+    for(let i=0;i <= this.props.profileY.length;i=i+2){
+      data2.push([this.props.profileY[i+1],this.props.profileY[i]])
     }
 
     var g2 = new Dygraph(document.getElementById("graph2"), data2,
@@ -151,20 +141,18 @@ class Video extends React.Component {
               drawPoints: false,
               showRoller: false,
               legend : 'never',
-              dateWindow : [0,this.props.profileY.length],
-              labels: ['Time','Random'],
-              /*axes: {
+              dateWindow : [this.props.profileY.length,0],
+              labels: ['Time', 'Random'],
+              height : this.props.windowHeight,
+              width : this.props.windowWidth,
+
+              axes: {
                 x: {
                   axisLabelFormatter: function(x) {
                     return '';
                   }
                 },
-                y: {
-                  axisLabelFormatter: function(y) {
-                    return '';
-                  }
-                }
-              }*/
+              }
             });
 
   }
@@ -203,15 +191,10 @@ class Video extends React.Component {
         <Tooltip id="tooltip">Click here to set/unset autoscale</Tooltip>
     );
 
-    const max = (
-        <Tooltip id="tooltip">Click here to change the max value of the Y axis</Tooltip>
-    );
-
-
     return (
       <div className="container-fluid">
         <div className="row">
-         <div className="col-md-2"></div>
+         <div className="col-md-1"></div>
           <div className="col-md-9">
             <Tabs defaultActiveKey={1} animation={false} id="noanim-tab-example">
               <div className="row">
@@ -288,7 +271,6 @@ function mapStateToProps(state) {
     autoscaleCheckedBool : state.video.autoscaleCheckedBool,
     temperatureCheckedBool : state.video.temperatureCheckedBool,
     yCheckedBool : state.video.yCheckedBool,
-    maxValue: state.video.maxValue,
     activeBkgnd: state.video.activeBkgnd,
     liveCheckedBool: state.options.liveCheckedBool,
     liveRun: state.options.liveRun,
@@ -306,7 +288,8 @@ function mapStateToProps(state) {
 
     imageMaxWidth: state.canvas.imageMaxWidth,
     imageMaxHeight: state.canvas.imageMaxHeight,
-
+    windowWidth:state.canvas.windowWidth,
+    windowHeight:state.canvas.windowHeight,
   };
 }
 
@@ -317,15 +300,14 @@ function mapDispatchToProps(dispatch) {
     autoscaleChecked: bindActionCreators(autoscaleChecked, dispatch),
     temperatureChecked: bindActionCreators(temperatureChecked, dispatch),
     yChecked: bindActionCreators(yChecked,dispatch),
-    textEnterMax: bindActionCreators(textEnterMax,dispatch),
-    textEmptyMax: bindActionCreators(textEmptyMax,dispatch),
     updateBackground: bindActionCreators(updateBackground,dispatch),
     setCrosshair: bindActionCreators(setCrosshair,dispatch),
     setRoi: bindActionCreators(setRoi, dispatch),
     resetRoi: bindActionCreators(resetRoi, dispatch),
     resetCrosshair: bindActionCreators(resetCrosshair, dispatch),
     rotation: bindActionCreators(rotation,dispatch),
-    switchDimensions: bindActionCreators(switchDimensions,dispatch)
+    switchDimensions: bindActionCreators(switchDimensions,dispatch),
+    setImgDisplay:bindActionCreators(setImgDisplay,dispatch),
 
   };
 }

@@ -10,8 +10,6 @@ import {setImgDisplay} from '../actions/options.js'
 class Canvas extends React.Component {
   constructor(props) {
     super(props);
-    //this.img_socket = null;
-    //this.registerChannel = this.registerChannel.bind(this);
     this.updateImage=this.updateImage.bind(this);
     this.image = new Image();
     this.draw_Beam_Marker = this.draw_Beam_Marker.bind(this);
@@ -19,54 +17,41 @@ class Canvas extends React.Component {
     this.handleMouseMove = this.handleMouseMove.bind(this);
     this.draw_ROI_Marker = this.draw_ROI_Marker.bind(this);
     this.drawing = false;
-    //this.liveState = false;
 
   }
 
-  /*componentWillReceiveProps(nextProps){
-    if(nextProps.acqImage==0 && nextProps.liveRun==0){
-      if(this.liveState==true){
-        this.liveState=false
-      }
-      //this.registerChannel();
-    } else if((nextProps.acqImage!=0 || nextProps.liveRun!=0) && (nextProps.acqImage!=this.props.acqImage || nextProps.liveRun!=0)){
-      if(nextProps.liveRun===1){
-        this.liveState=true;
-      } else {
-        this.liveState=false;
-      }
-      if(nextProps.liveRun==1 && this.props.liveRun==1){
-      } else {
-        this.Askimage();
-      }
-    };
-    
-  }*/
-
   componentDidMount(){
-    window.addEventListener("resize", this.updateDimensions.bind(this));
+    console.log("componentDidMount")
+    window.addEventListener("resize", this.updateDimensions.bind(this), {passive :true});
   }
 
   componentDidUpdate(nextProps){
-    /*if((nextProps.acqImage!=0 || nextProps.liveRun!=0) || (this.props.beam_markX!=nextProps.beam_markX && this.props.beam_markY!=nextProps.beam_markY) || (this.props.rotation!=nextProps.rotation)){
-      this.updateImage(nextProps);
-    }*/
-  
-    if((this.props.img_num!=nextProps.img_num) || this.props.liveRun===1 || (this.props.acqImage!=0) || (this.props.beam_markX!=nextProps.beam_markX && this.props.beam_markY!=nextProps.beam_markY) || (this.props.rotation!=nextProps.rotation)){
+    console.log("componentDidUpdate")
+    if((nextProps.acqImage!=0 || nextProps.liveRun!=0) || (this.props.beam_markX!=nextProps.beam_markX && this.props.beam_markY!=nextProps.beam_markY) || (this.props.rotation!=nextProps.rotation)){
       this.updateImage(nextProps);
     }
-
-    
+    /*
+    if((this.props.img_num!=nextProps.img_num) || this.props.liveRun===1 || (this.props.acqImage!=0) || (this.props.beam_markX!=nextProps.beam_markX && this.props.beam_markY!=nextProps.beam_markY) || (this.props.rotation!=nextProps.rotation)){
+      console.log("Update image 2");
+      this.updateImage(nextProps);
+       && (this.props.exposureTimeValue!="" || this.props.samplingRateValue!="")
+    }*/
+    if(this.props.liveRun===1 && this.props.buttonAcquireStyle==nextProps.buttonAcquireStyle){
+      this.props.setImgDisplay();
+    }
+    /*
+    if(this.props.windowWidth !== nextProps.windowWidth && this.props.windowHeight !== nextProps.windowHeight){
+      document.getElementById("graph1").setAttribute("style",`width:${this.props.windowWidth}px`);
+      document.getElementById("graph2").setAttribute("style",`height:${this.props.windowHeight}px`);
+    }*/
   }
 
   componentWillUnmount(){
+    console.log("componentWillUnmount");
     window.removeEventListener("resize", this.updateDimensions.bind(this));
   }
     
   
-
-
-
   updateImage(nextProps){
     const ctx = this.refs.myCanvas.getContext('2d');
     let src = this.props.imageSrc;
@@ -125,9 +110,11 @@ class Canvas extends React.Component {
       }
       ctx.restore();
     }
-    if(this.props.liveRun === 1){
+    /*
+    if(this.props.liveRun === 1 && (this.props.exposureTimeValue!="" || this.props.samplingRateValue!="")){
       this.props.setImgDisplay();
     }
+    */
     this.image.src = "data:image/jpg;base64,"+src;
   }
 
@@ -177,6 +164,7 @@ class Canvas extends React.Component {
         if(this.props.activeBkgnd===true){ //if there is a bkg before ROI, then we need to reset it because of changes in dimensions.
           this.props.updateBackground();
         }
+        this.props.setImgDisplay();
       }
   }
 
@@ -184,48 +172,6 @@ class Canvas extends React.Component {
   updateDimensions(){
     this.props.updateDimensions(window.innerWidth,window.innerHeight);
   }
-  /*
-  registerChannel(){
-    if (this.img_socket === null) {
-      let ws_address;
-      if (window.location.port != "") {
-        ws_address = "ws://"+window.location.hostname+":"+window.location.port+"/"+this.props.client_id+"/api/image_channel";
-      } else {
-        ws_address = "ws://"+window.location.hostname+"/"+this.props.client_id+"/api/image_channel";
-      }
-
-      this.img_socket = new WebSocket(ws_address);
-      if(this.liveState==true){
-        this.img_socket.onopen = () => {
-          this.Askimage();
-        };
-        
-      }
-    }
-  }
-  
-  closeSocket(){  
-    if(this.img_socket != null){
-      this.img_socket.close();
-      this.img_socket = null;
-      this.registerChannel();
-    }
-  }
-  
-  Askimage(){    
-    if (this.img_socket != null){
-      if(this.props.beam_markY!=undefined && this.props.beam_markX!=undefined){
-        this.img_socket.send([this.props.beam_markX,this.props.beam_markY,this.props.client_id]);
-      }else{
-        this.img_socket.send([false,this.props.client_id]);
-      }
-    }
-    this.img_socket.onmessage = (packed_msg) => {
-      this.updateData(JSON.parse(packed_msg.data));
-    }
-  }*/
-
-
 
   render(){
     return <canvas ref="myCanvas" width={this.props.windowWidth} height={this.props.windowHeight} onMouseDown={this.handleMouseDown} onMouseMove={this.handleMouseMove} onMouseUp={this.draw_Beam_Marker} style={{'verticalAlign': 'middle', background:'#EFEFEF'}} />
@@ -263,6 +209,7 @@ function mapStateToProps(state) {
     calib_y:state.options.calib_y,
     imageSrc:state.canvas.imageSrc,
     activeBkgnd: state.video.activeBkgnd,
+    buttonAcquireStyle:state.options.buttonAcquireStyle,
   };
 }
 

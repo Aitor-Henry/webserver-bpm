@@ -113,12 +113,14 @@ export default function options(state = initialState, action) {
 
     case 'LATENCY_NOT_IN_RANGE':
     {
-      alert("You try to create a latency time ((1/AcquisitonRate)-ExposureTime) not in range with the specs of the camera, this value should be in range of [",state.minLatencyTime,",",state.maxLatencyTime,"]. For further questions call Laurent CLAUTRE (2912). "); 
+      alert("You try to create a latency time ((1/AcquisitonRate)-ExposureTime) not in range with the specs of the camera, this value should be in range of ["+state.minLatencyTime+","+state.maxLatencyTime+"]. For further questions call Laurent CLAUTRE (2912). "); 
+      return Object.assign({}, state, {samplingRateValue:""});
     }
 
     case 'EXPOSURE_TIME_NOT_IN_RANGE':
     {
-      alert("You try to create a exposure time not in range with the specs of the camera, this value should be in range of [",state.minExposureTime,",",state.maxExposureTime,"]. For further questions call Laurent CLAUTRE (2912).");
+      alert("You try to create a exposure time not in range with the specs of the camera, this value should be in range of ["+state.minExposureTime+","+state.maxExposureTime+"]. For further questions call Laurent CLAUTRE (2912).");
+      return Object.assign({}, state, {exposureTimeValue:""});
     }
 
     case 'UPDATE_CALIBRATION_APPLY_DONE':

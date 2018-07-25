@@ -38,10 +38,9 @@ export default function canvas(state = initialState, action) {
   switch (action.type) {
     case 'UPDATE_DATA' :
     {
-      console.log(action.data);
+      console.log("update data")
       if(action.data.stopLive===true){
-        console.log(" STOPPING LIVE ")
-        return Object.assign({}, state, {alertHidden:true, imageSrc:state.imageSrc, intensityXY:state.intensityXY, img_num : state.img_num, fwhmX: state.fwhmX,fwhmY: state.fwhmY, intensity : state.intensity, bx: state.bx,by: state.by, profileX : state.profileX , profileY : state.profileY })
+        return Object.assign({}, state, {alertHidden:true})
       }else{
         return Object.assign({}, state, {alertHidden:true, imageSrc:action.data.jpegData, intensityXY:action.data.intensity, img_num : action.data.framenb, fwhmX: action.data.fwhm_x,fwhmY: action.data.fwhm_y, intensity : action.data.I, bx: action.data.X,by: action.data.Y, profileX : action.data.profile_x , profileY : action.data.profile_y })
       }

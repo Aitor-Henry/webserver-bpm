@@ -43,8 +43,6 @@ class BVWebserver:
     self.port = port
     self.app = bottle.Bottle()
     self.register_routes()
-    #self.limaccds_device=None
-    #self.bpm_device=None
     self.event_counter = 0
     self.cameras_running = {}
 
@@ -59,20 +57,16 @@ class BVWebserver:
   def camera_init(self,camera_name): 
     if not(self.cameras_running.has_key(camera_name)):
       self.event_counter = 0
-      reply=None
-      #event = gevent.event.Event()
+      imgdisplayreply=None
       tango_device = self.find_tango_device(camera_name)
       limaccds_device = PyTango.DeviceProxy(tango_device)
       bpm_device = PyTango.DeviceProxy(limaccds_device.getPluginDeviceNameFromType('bpm'))
       bpm_device.subscribe_event('bvdata', PyTango.EventType.CHANGE_EVENT, self.decode_bvdata, [])
       bpm_device.Start()
-      dict_to_add = {camera_name : [limaccds_device, bpm_device, reply]}
+      dict_to_add = {camera_name : [limaccds_device, bpm_device, imgdisplayreply]}
       self.cameras_running.update(dict_to_add)
 
 
-
-
-  """Methods used in handle_web_queries()"""
 
   def decode_bvdata(self,evt_bvdata):
     """Callback function from the subscribe_event on bvdata"""
@@ -97,21 +91,7 @@ class BVWebserver:
         fwhm_x,fwhm_y,list_int_profile_x,list_int_profile_y, jpegData) = struct.unpack(HEADER_FORMAT, bv_data)
       profile_x=ListStrToListInt(list_int_profile_x)
       profile_y=ListStrToListInt(list_int_profile_y)
-      result_array = {"framenb" : framenb, "X" : X, "Y" : Y, "I" : I, "fwhm_x" : fwhm_x, "fwhm_y" : fwhm_y,  "jpegData" : jpegData, "profile_x" : profile_x, "profile_y" : profile_y}
-      self.cameras_running[camera_name][2] = result_array
-
-
-    """bv_data=bvdata_read[1]
-    HEADER_FORMAT=bvdata_read[0]
-    (timestamp,framenb,
-      X,Y,I,maxI,roi_top_x,roi_top_y,
-      roi_size_getWidth,roi_size_getHeight,
-      fwhm_x,fwhm_y,list_int_profile_x,list_int_profile_y, jpegData) = struct.unpack(HEADER_FORMAT, bv_data)
-    print "length profiles : ", len(list_int_profile_x), len(list_int_profile_y)
-    profile_x=ListStrToListInt(list_int_profile_x)
-    profile_y=ListStrToListInt(list_int_profile_y)
-    result_array = {"framenb" : framenb, "X" : X, "Y" : Y, "I" : I, "fwhm_x" : fwhm_x, "fwhm_y" : fwhm_y,  "jpegData" : jpegData, "profile_x" : profile_x, "profile_y" : profile_y}
-    return result_array"""
+      self.cameras_running[camera_name][2] = {"framenb" : framenb, "X" : X, "Y" : Y, "I" : I, "fwhm_x" : fwhm_x, "fwhm_y" : fwhm_y,  "jpegData" : jpegData, "profile_x" : profile_x, "profile_y" : profile_y} 
 
 
   def getExposuretime(self,camera_name):
@@ -142,119 +122,113 @@ class BVWebserver:
   def getDimensionImage(self,camera_name):
     return (self.cameras_running[camera_name][0].image_width,self.cameras_running[camera_name][0].image_height)
 
-
-  def handle_web_queries(self,camera,query):
+  ######################### CALLBACK FUNCTIONS FOR APPLY REQUEST #########################
+  def getstatus(self,camera):
     self.camera_init(camera)
-    print "------------------------NEXT QUERY-----------------------"
-    print query
     self.event_counter = 1
-    #self.cameras_running[camera][2]=None
-    if query == "get_status":
-      reply = { "exposure_time": self.getExposuretime(camera),
-                "live": True if self.getAcqStatus(camera)=='Running' else False,
-                "roi": self.HasRoi(camera),
-                "full_width": self.getDimensionImage(camera)[0],
-                "full_height": self.getDimensionImage(camera)[1],
-                "acq_rate": self.getAcqRate(camera),
-                "color_map": self.cameras_running[camera][1].color_map, 
-                "autoscale": self.cameras_running[camera][1].autoscale,
-                "calib_x": self.cameras_running[camera][1].calibration[0],
-                "calib_y":  self.cameras_running[camera][1].calibration[1],
-                "background": self.cameras_running[camera][1].HasBackground(),
-                "beam_mark_x": float(self.cameras_running[camera][1].beammark[0]),
-                "beam_mark_y": float(self.cameras_running[camera][1].beammark[1]),
-                "min_exposure_time": self.cameras_running[camera][0].valid_ranges[0],
-                "max_exposure_time": self.cameras_running[camera][0].valid_ranges[1],
-                "min_latency_time": self.cameras_running[camera][0].valid_ranges[2],
-                "max_latency_time": self.cameras_running[camera][0].valid_ranges[3]}
-
-
-      return reply
+    reply = { "exposure_time": self.getExposuretime(camera),
+              "live": True if self.getAcqStatus(camera)=='Running' else False,
+              "roi": self.HasRoi(camera),
+              "full_width": self.getDimensionImage(camera)[0],
+              "full_height": self.getDimensionImage(camera)[1],
+              "acq_rate": self.getAcqRate(camera),
+              "color_map": self.cameras_running[camera][1].color_map, 
+              "autoscale": self.cameras_running[camera][1].autoscale,
+              "calib_x": self.cameras_running[camera][1].calibration[0],
+              "calib_y":  self.cameras_running[camera][1].calibration[1],
+              "background": self.cameras_running[camera][1].HasBackground(),
+              "beam_mark_x": float(self.cameras_running[camera][1].beammark[0]),
+              "beam_mark_y": float(self.cameras_running[camera][1].beammark[1]),
+              "min_exposure_time": self.cameras_running[camera][0].valid_ranges[0],
+              "max_exposure_time": self.cameras_running[camera][0].valid_ranges[1],
+              "min_latency_time": self.cameras_running[camera][0].valid_ranges[2],
+              "max_latency_time": self.cameras_running[camera][0].valid_ranges[3]}
+    return reply
     
-    elif query == "set_roi":
-      try:
-        self.cameras_running[camera][0].image_roi = (bottle.request.query.x,bottle.request.query.y,bottle.request.query.w,bottle.request.query.h)
-      except:
-        logging.exception("Could not set roi")
+  def setroi(self,camera):
+    print bottle.request
+    print bottle.request.query
+    print bottle.request.query.x
+    try:
+      self.cameras_running[camera][0].image_roi = (int(bottle.request.query.x),int(bottle.request.query.y),int(bottle.request.query.w),int(bottle.request.query.h))
+    except:
+      logging.exception("Could not set roi")
+    else:
+      pass
+
+  def imgdisplay(self,camera):
+    self.cameras_running[camera][1].color_map = bool(int(bottle.request.query.color_map))
+    self.cameras_running[camera][1].autoscale = bool(int(bottle.request.query.autoscale))
+    if bottle.request.query.lut_method == "Logarithmic":
+      self.cameras_running[camera][1].lut_method = "LOG"
+    else:
+      self.cameras_running[camera][1].lut_method = "LINEAR"
+
+    self.cameras_running[camera][1].calibration = ([float(bottle.request.query.calib_x), float(bottle.request.query.calib_y)])
+    self.setExposuretime(float(bottle.request.query.exp_t),camera)
+    self.setAcqRate(float(bottle.request.query.acq_rate),camera)
+
+    if bool(int(bottle.request.query.live)): #Asking for live
+      if not(self.getAcqStatus(camera)=='Running'): #if camera not already in live mode then we start live
+        self.cameras_running[camera][0].video_live=True
+    else: #Not live, only one acquisition
+      if self.getAcqStatus(camera)=='Running': #if camera running live mode, we stop it.
+        self.cameras_running[camera][0].video_live=False
+        return {"stopLive" : True}
       else:
-        pass
+        self.cameras_running[camera][0].acq_nb_frames = 1 #otherwise we start a 1 frame acq
+        self.cameras_running[camera][0].prepareAcq()
+        self.cameras_running[camera][0].startAcq()
+    
+    while self.cameras_running[camera][2]==None:
+      gevent.sleep((1/self.getAcqRate(camera))/10)
 
-    elif query == "img_display_config":
+    reply = self.cameras_running[camera][2] # should contain bvdata at this point
+    if bottle.request.query.beammark_x!="undefined" and bottle.request.query.beammark_y!="undefined":
+      I = self.cameras_running[camera][1].GetPixelIntensity([int(bottle.request.query.beammark_x),int(bottle.request.query.beammark_y)])
+      reply.update({ "intensity": I })
+    reply.update({ "stopLive" : False})
+    self.cameras_running[camera][2]=None
+    return reply
       
-      self.cameras_running[camera][1].color_map = bool(int(bottle.request.query.color_map))
-      self.cameras_running[camera][1].autoscale = bool(int(bottle.request.query.autoscale))
-      if bottle.request.query.lut_method == "Logarithmic":
-        self.cameras_running[camera][1].lut_method = "LOG"
+  def updatecalibration(self,camera):
+    calib_x = float(bottle.request.query.calib_x)
+    calib_y = float(bottle.request.query.calib_y)
+    self.cameras_running[camera][1].calibration = ([calib_x, calib_y])
+      
+  def lockbeammark(self,camera):
+    self.cameras_running[camera][1].beammark = ([int(bottle.request.query.x), int(bottle.request.query.y)])
+      
+  def getintensity(self,camera):
+    x = int(bottle.request.query.x); y = int(bottle.request.query.y)
+    reply = { "intensity": self.cameras_running[camera][1].GetPixelIntensity([x,y]) }
+    return reply
+      
+  def setbackground(self,camera):
+    if int(bottle.request.query.backgroundstate):
+      if self.getAcqStatus(camera)=='Running':
+        raise RuntimeError, "Acquisition has not finished (or Live mode is on)"
       else:
-        self.cameras_running[camera][1].lut_method = "LINEAR"
-
-      self.cameras_running[camera][1].calibration = ([float(bottle.request.query.calib_x), float(bottle.request.query.calib_y)])
-      self.setExposuretime(float(bottle.request.query.exp_t),camera)
-      self.setAcqRate(float(bottle.request.query.acq_rate),camera)
-
-      if bool(int(bottle.request.query.live)): #Asking for live
-        if not(self.getAcqStatus(camera)=='Running'): #if camera not already in live mode then we start live
-          print "STARTING LIVE"
-          self.cameras_running[camera][0].video_live=True
-      else: #Not live, only one acquisition
-        print(self.getAcqStatus(camera))
-        if self.getAcqStatus(camera)=='Running': #if camera running live mode, we stop it.
-          print "STOPPING LIVE"
-          self.cameras_running[camera][0].video_live=False
-          return {"stopLive" : True}
-        else:
-          print "ACQUISITION"
-          self.cameras_running[camera][0].acq_nb_frames = 1 #otherwise we start a 1 frame acq
-          self.cameras_running[camera][0].prepareAcq()
-          self.cameras_running[camera][0].startAcq()
-      
-      #self.event_handler.wait()
-      while self.cameras_running[camera][2]==None:
-        gevent.sleep((1/self.getAcqRate(camera))/10)
-
-      #bvdata = self.cameras_running[camera][1].bvdata
-      #self.cameras_running[camera][2] = self.decode_bvdata(bvdata)
-
-      reply = self.cameras_running[camera][2] # should contain bvdata at this point
-      if bottle.request.query.beammark_x!="undefined" and bottle.request.query.beammark_y!="undefined":
-        I = self.cameras_running[camera][1].GetPixelIntensity([int(bottle.request.query.beammark_x),int(bottle.request.query.beammark_y)])
-        reply.update({ "intensity": I })
-      reply.update({ "stopLive" : False})
-      self.cameras_running[camera][2]=None
-      return reply
-      
-
-    elif query == "update_calibration":
-      self.cameras_running[camera][1].calibration = ([float(bottle.request.query.calib_x), float(bottle.request.query.calib_y)])
-      
-
-    elif query == "lock_beam_mark":
-      self.cameras_running[camera][1].beammark = ([int(bottle.request.query.x), int(bottle.request.query.y)])
-      
-
-    elif query == "get_intensity":
-      x = int(bottle.request.query.x); y = int(bottle.request.query.y)
-      self.cameras_running[camera][2] = { "intensity": self.cameras_running[camera][1].GetPixelIntensity([x,y]) }
-      return self.cameras_running[camera][2]
-      
-
-    elif query == "set_background":
-        if int(bottle.request.query.backgroundstate):
-          if self.getAcqStatus(camera)=='Running':
-            raise RuntimeError, "Acquisition has not finished (or Live mode is on)"
-          else:
-            self.cameras_running[camera][1].TakeBackground()
-        else:
-          self.cameras_running[camera][1].ResetBackground()
+        self.cameras_running[camera][1].TakeBackground()
+    else:
+      self.cameras_running[camera][1].ResetBackground()
         
+######################### CALLBACK FUNCTIONS FOR APPLY REQUEST : END #########################
+
 
   def register_routes(self):
+    self.app.route('/', callback=self.index)
     self.app.route('/:camera/', callback=self.get_camera_page)
     self.app.route('/webpack_output/<filename>', callback=self.server_static)
-    self.app.route('/:camera/api/:query', callback=self.handle_web_queries)
-    self.app.route('/', callback=self.index)
 
-    #self.app.route('/:camera/api/image_channel', self.provide_image, apply=[websocket]) maybe not ws anymore
+    self.app.route('/:camera/api/get_status', callback=self.getstatus)
+    self.app.route('/:camera/api/set_roi', callback=self.setroi)
+    self.app.route('/:camera/api/img_display_config', callback=self.imgdisplay)
+    self.app.route('/:camera/api/update_calibration', callback=self.updatecalibration)
+    self.app.route('/:camera/api/lock_beam_mark', callback=self.lockbeammark)
+    self.app.route('/:camera/api/get_intensity', callback=self.getintensity)
+    self.app.route('/:camera/api/set_background', callback=self.setbackground)
+
     
 
   def run_forever(self):
@@ -266,8 +240,7 @@ class BVWebserver:
 
 
 
-
-######### BOTTLE ROUTES METHODS#########
+######################### BOTTLE ROUTES METHODS FOR BROSWER DISPLAY #########################
   def index(self):
     tango_db = PyTango.DeviceProxy("sys/database/2")
     limaccds_devices_name=[]
@@ -301,32 +274,9 @@ class BVWebserver:
 
   def get_camera_page(self, camera):
     return bottle.static_file("index.html", root=os.path.dirname(os.path.abspath(__file__)))
+######################### BOTTLE ROUTES METHODS FOR BROSWER DISPLAY : END #########################
 
 
-  """def provide_image(self,camera,ws):
-    print ws
-  """
-
-########--------------------------------------------------------------------------------------########
-"""
-
-#######TO DIALOGUE WITH WEBSOCKET FROM FRONT END SIDE#######
-@bottle.get('/:camera/api/image_channel', apply=[websocket])
-def provide_images(ws,camera):
-  #import pdb; pdb.set_trace()
-  while True:
-    client_id = ws.receive()
-    if client_id is not None:
-      query_image=client_id.split(",")
-      if query_image[0]=="false": # not terrible
-        qres = query("new_image", intensity=False, camera_name=query_image[1])
-      else:
-        qres = query("new_image", intensity=True, camera_name=query_image[2], bm_x=query_image[0], bm_y=query_image[1])
-      tosend = json.dumps(qres)
-      ws.send(tosend)
-      
-    else: break
-###############################################################
-"""
+ ########--------------------------------------------------------------------------------------########
 if __name__=="__main__":
   BVWebserver(HOST,PORT).run_forever()

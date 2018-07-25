@@ -22,12 +22,8 @@ class Options extends React.Component {
 
   textStateExposure(){
 
-    if(ReactDom.findDOMNode(this.refs.exposure).value > -0.01){ // if >0, can't write "0,xxx" because of the first 0
-      if(ReactDom.findDOMNode(this.refs.exposure).value >this.props.maxExposureTime || ReactDom.findDOMNode(this.refs.exposure).value<this.props.minExposureTime){
-        this.props.exposureTimeNotInRange();
-      }else{
-        this.props.textEnterExposure(ReactDom.findDOMNode(this.refs.exposure).value);
-      }
+    if(ReactDom.findDOMNode(this.refs.exposure).value > -0.0001){ // if >0, can't write "0,xxx" because of the first 0
+      this.props.textEnterExposure(ReactDom.findDOMNode(this.refs.exposure).value);
     }
     else {
       this.props.textEmptyExposure(); 
@@ -36,13 +32,8 @@ class Options extends React.Component {
 
   textStateSampling(){
 
-    if(ReactDom.findDOMNode(this.refs.sampling).value > -0.01 && ReactDom.findDOMNode(this.refs.sampling).value<=(1.0/this.props.exposureTimeValue)){
-      if(this.props.exposureTimeValue - (1/ReactDom.findDOMNode(this.refs.sampling).value) > this.props.maxLatencyTime || this.props.exposureTimeValue - (1/ReactDom.findDOMNode(this.refs.sampling).value) < this.props.minLatencyTime){
-        this.props.latencyTimeNotInRange();
-
-      }else{
-        this.props.textEnterSampling(ReactDom.findDOMNode(this.refs.sampling).value);
-      }
+    if(ReactDom.findDOMNode(this.refs.sampling).value > -0.0001 && ReactDom.findDOMNode(this.refs.sampling).value<=(1.0/this.props.exposureTimeValue)){
+      this.props.textEnterSampling(ReactDom.findDOMNode(this.refs.sampling).value);
     }
     else{
       this.props.textEmptySampling();
@@ -72,9 +63,17 @@ class Options extends React.Component {
 
   buttonAcquirePressed(){
     this.props.buttonAcquirePressed();
-    //if(this.props.liveRun===0){
-    this.props.setImgDisplay();
-    //}
+    if(ReactDom.findDOMNode(this.refs.exposure).value > this.props.maxExposureTime || ReactDom.findDOMNode(this.refs.exposure).value < this.props.minExposureTime){
+      this.props.exposureTimeNotInRange();
+    }else{
+      if((1/ReactDom.findDOMNode(this.refs.sampling).value)-this.props.exposureTimeValue > this.props.maxLatencyTime || (1/ReactDom.findDOMNode(this.refs.sampling).value)-this.props.exposureTimeValue < this.props.minLatencyTime){
+        this.props.latencyTimeNotInRange();
+      }else{
+        if(this.props.liveRun===this.props.liveSet || (this.props.liveSet==1 && this.props.liveRun==0)){
+          this.props.setImgDisplay();
+        }
+      }
+    }
   }
 
 
@@ -92,7 +91,7 @@ class Options extends React.Component {
     return (
       <div className="container-fluid">
         <div className="row">
-        <div className="col-md-2"></div>
+        <div className="col-md-1"></div>
           <div className="col-md-4">
             <Form horizontal>
               <FormGroup controlId="formHorizontalExposure">
@@ -101,14 +100,14 @@ class Options extends React.Component {
               </FormGroup>
             </Form>
           </div>
-          <div className="col-md-2"></div>
+          <div className="col-md-1"></div>
           <div className="col-md-4">
           <input type="checkbox" onChange={this.liveChecked} checked={this.props.liveCheckedBool === 1} disabled={this.props.liveRun === 1} />
           <Col componentClass={ControlLabel} sm={13}>Live</Col>
           </div>
         </div>
         <div className="row">
-          <div className="col-md-2"></div>
+          <div className="col-md-1"></div>
           <div className="col-md-4">
             <Form horizontal>
               <FormGroup controlId="formHorizontalSampling">
@@ -117,7 +116,7 @@ class Options extends React.Component {
               </FormGroup>
             </Form>
           </div>
-          <div className="col-md-2"></div>
+          <div className="col-md-1"></div>
           <div className="col-md-4">
           <Button bsStyle={this.props.buttonAcquireStyle} onClick={this.buttonAcquirePressed}><Glyphicon glyph={this.props.buttonAcquireGlyphiconText} /> {this.props.buttonAcquireText}</Button>
           {" "}
@@ -163,6 +162,7 @@ function mapStateToProps(state) {
     maxExposureTime:state.options.maxExposureTime,
     minLatencyTime : state.options.minLatencyTime,
     maxLatencyTime : state.options.maxLatencyTime,
+    liveSet: state.options.liveSet,
   };
 }
 

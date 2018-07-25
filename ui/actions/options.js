@@ -1,6 +1,6 @@
 //////////////////////////////////////////BUTTON////////////////////////////////////////////////////////
 export function setImgDisplay(){
-
+  //console.log(" setImgDisplay ")
   return (dispatch,getState) => {
     const state = getState()
     fetch('/'+state.bpmState.client_id+'/api/img_display_config?beammark_x='+state.canvas.beam_markX+'&beammark_y='+state.canvas.beam_markY+'&color_map='+state.video.temperatureCheckedBool+'&autoscale='+state.video.autoscaleCheckedBool+'&lut_method='+state.video.selectedLut+'&calib_x='+state.options.calib_x+'&calib_y='+state.options.calib_y+'&live='+state.options.liveRun+'&exp_t='+state.options.exposureTimeValue+'&acq_rate='+state.options.samplingRateValue)

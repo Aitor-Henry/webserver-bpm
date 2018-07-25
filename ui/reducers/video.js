@@ -3,7 +3,7 @@ const initialState = {
   autoscaleCheckedBool: 0,
   temperatureCheckedBool:0,
   yCheckedBool: 0,
-  maxValue: "",
+  //maxValue: "",
   backgroundstate: 1,
   activeBkgnd:false,
   crosshair: 0,
@@ -66,7 +66,7 @@ export default function video(state = initialState, action) {
       }
     }
 
-    case 'TEXT_ENTER_MAX':
+    /*case 'TEXT_ENTER_MAX':
     {
       return Object.assign({}, state, {maxValue : action.text})
     }
@@ -74,7 +74,7 @@ export default function video(state = initialState, action) {
     case 'TEXT_EMPTY_MAX':
     {
       return Object.assign({}, state, {maxValue : ""})
-    }
+    }*/
 
     case 'BACKGROUND_STATE':
     {
