@@ -15,8 +15,7 @@ class Infos extends React.Component {
 
   }
 
-
- 
+  // Message is now closed after new image. No need of this but still keeping it just in case.
   closeClicked(){
     this.props.hideAlert();
 
@@ -36,7 +35,7 @@ class Infos extends React.Component {
         <div className="row">
         <div className="col-md-5"></div>
           <div className="col-md-2">
-          <Alert bsStyle="success" hidden={this.props.alertHidden}> ROI is apply/reset successfully ... Acquire new image.<Glyphicon onClick={this.closeClicked}  glyph={'remove'} /></Alert>
+          <Alert bsStyle="success" hidden={this.props.alertHidden}> ROI is apply/reset successfully... New image incoming...<Glyphicon onClick={this.closeClicked}  glyph={'remove'} /></Alert>
           </div>
         </div>
       </div>

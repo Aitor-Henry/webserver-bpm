@@ -70,8 +70,4 @@ export function autoscaleChecked(){
 export function temperatureChecked(){
   return { type:"TEMPERATURE_CHECKED"}
 }
-
-export function yChecked(){
-  return { type:"Y_CHECKED"}
-}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

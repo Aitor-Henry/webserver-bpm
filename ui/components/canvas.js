@@ -17,45 +17,30 @@ class Canvas extends React.Component {
     this.handleMouseMove = this.handleMouseMove.bind(this);
     this.draw_ROI_Marker = this.draw_ROI_Marker.bind(this);
     this.drawing = false;
-
+    
   }
 
   componentDidMount(){
-    console.log("componentDidMount")
     window.addEventListener("resize", this.updateDimensions.bind(this), {passive :true});
   }
 
-  componentDidUpdate(nextProps){
-    console.log("componentDidUpdate")
-    if((nextProps.acqImage!=0 || nextProps.liveRun!=0) || (this.props.beam_markX!=nextProps.beam_markX && this.props.beam_markY!=nextProps.beam_markY) || (this.props.rotation!=nextProps.rotation)){
-      this.updateImage(nextProps);
+  componentDidUpdate(prevProps, prevState){
+    console.log(prevProps!=this.props);
+    if(prevProps!=this.props){
+      this.updateImage(prevProps);
     }
-    /*
-    if((this.props.img_num!=nextProps.img_num) || this.props.liveRun===1 || (this.props.acqImage!=0) || (this.props.beam_markX!=nextProps.beam_markX && this.props.beam_markY!=nextProps.beam_markY) || (this.props.rotation!=nextProps.rotation)){
-      console.log("Update image 2");
-      this.updateImage(nextProps);
-       && (this.props.exposureTimeValue!="" || this.props.samplingRateValue!="")
-    }*/
-    if(this.props.liveRun===1 && this.props.buttonAcquireStyle==nextProps.buttonAcquireStyle){
-      this.props.setImgDisplay();
-    }
-    /*
-    if(this.props.windowWidth !== nextProps.windowWidth && this.props.windowHeight !== nextProps.windowHeight){
-      document.getElementById("graph1").setAttribute("style",`width:${this.props.windowWidth}px`);
-      document.getElementById("graph2").setAttribute("style",`height:${this.props.windowHeight}px`);
-    }*/
   }
 
   componentWillUnmount(){
-    console.log("componentWillUnmount");
     window.removeEventListener("resize", this.updateDimensions.bind(this));
   }
     
-  
-  updateImage(nextProps){
+
+  updateImage(prevProps){
+    console.log("UPDATE IMAGE")
     const ctx = this.refs.myCanvas.getContext('2d');
     let src = this.props.imageSrc;
-
+    this.image.src = "data:image/jpg;base64,"+src;
     this.image.onload = () => {
       ctx.save();
 
@@ -72,8 +57,13 @@ class Canvas extends React.Component {
       else{
         ctx.drawImage(this.image, 0, 0,this.props.windowWidth,this.props.windowHeight);
       }
+      this.image.src = "";
       if(this.props.beam_markX != undefined && this.props.beam_markY != undefined && !this.props.activeROI && this.props.rotation === 0){
-        ctx.strokeStyle = "#ef0000" //red, cross for beamlock
+        if(this.props.temperatureCheckedBool===1){
+          ctx.strokeStyle = "#ffffff" // white cross
+        }else{
+          ctx.strokeStyle = "#ef0000" //red cross for beamlock, no color map
+        }
         ctx.font = '15px Arial'
         ctx.fillStyle = "#ef0000" 
         ctx.beginPath();
@@ -95,8 +85,13 @@ class Canvas extends React.Component {
       if(this.props.start_X != undefined && this.props.start_Y != undefined && this.props.rotation===0){
         this.draw_ROI_Marker()
       }
-      if(this.props.bx>0 && this.props.by>0 && this.props.rotation===0 && this.props.calib_x===nextProps.calib_x && this.props.calib_y===nextProps.calib_y){ // draw green cross on point (x,y) found by bpm
-        ctx.strokeStyle = "#00ff00" //green
+      if(this.props.bx>0 && this.props.by>0 && this.props.rotation===0 && this.props.calib_x===prevProps.calib_x && this.props.calib_y===prevProps.calib_y){ // draw cross on point (x,y) found by bpm
+        if(this.props.temperatureCheckedBool===1){
+          // in case of colors the green cross won't be visible on green areas.
+          ctx.strokeStyle = "#000000"
+        }else{
+          ctx.strokeStyle = "#00ff00" //green
+        }
         ctx.font = '15px Arial'
         ctx.fillStyle = "#00ff00"
         ctx.beginPath();
@@ -110,12 +105,10 @@ class Canvas extends React.Component {
       }
       ctx.restore();
     }
-    /*
-    if(this.props.liveRun === 1 && (this.props.exposureTimeValue!="" || this.props.samplingRateValue!="")){
+    if(this.props.liveRun===1 && prevProps.acqImage==0){
       this.props.setImgDisplay();
     }
-    */
-    this.image.src = "data:image/jpg;base64,"+src;
+    
   }
 
   handleMouseDown(e){
@@ -181,8 +174,6 @@ class Canvas extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    img_num: state.canvas.img_num,
-    client_id: state.bpmState.client_id,
     beam_markX:state.canvas.beam_markX,
     beam_markY:state.canvas.beam_markY,
     crosshair:state.video.crosshair,
@@ -197,11 +188,9 @@ function mapStateToProps(state) {
     rotation:state.video.rotation,
     windowWidth:state.canvas.windowWidth,
     windowHeight:state.canvas.windowHeight,
-    imageRatio:state.canvas.imageRatio,
 
     liveRun:state.options.liveRun,
     acqImage:state.options.acqImage,
-    exp_t:state.options.exposureTimeValue,
     intensityXY:state.canvas.intensityXY,
     bx:state.canvas.bx,
     by:state.canvas.by,
@@ -209,7 +198,7 @@ function mapStateToProps(state) {
     calib_y:state.options.calib_y,
     imageSrc:state.canvas.imageSrc,
     activeBkgnd: state.video.activeBkgnd,
-    buttonAcquireStyle:state.options.buttonAcquireStyle,
+    temperatureCheckedBool:state.video.temperatureCheckedBool,
   };
 }
 

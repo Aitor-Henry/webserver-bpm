@@ -13,7 +13,6 @@ const initialState = {
   acqImage: 0,
   calib_x: 1,
   calib_y: 1,
-  saveValue: 0,
   applyDisabled : false,
   saveDisabled : false,
   minExposureTime : 0,

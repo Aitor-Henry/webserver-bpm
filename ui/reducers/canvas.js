@@ -27,8 +27,7 @@ const initialState = {
   windowWidth:undefined,
   windowHeight:undefined,
   imageRatio:undefined,
-  imageSrc:""
- 
+  imageSrc:"",
 };
 
 
@@ -38,7 +37,6 @@ export default function canvas(state = initialState, action) {
   switch (action.type) {
     case 'UPDATE_DATA' :
     {
-      console.log("update data")
       if(action.data.stopLive===true){
         return Object.assign({}, state, {alertHidden:true})
       }else{

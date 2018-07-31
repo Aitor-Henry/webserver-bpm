@@ -5,18 +5,9 @@ import gevent.queue
 import time
 import bottle
 import socket
-import json
 import PyTango
 import struct
-from bottle.ext.websocket import GeventWebSocketServer
-from bottle.ext.websocket import websocket
-try:
-    from bliss.data.routines.pixmaptools import qt4 as pixmaptools
-except ImportError:
-    os.environ["QUB_SUBPATH"]="qt4"
-    from Qub.CTools import pixmaptools
 import logging
-
 import sys
 
 # patch socket module
@@ -63,8 +54,7 @@ class BVWebserver:
       bpm_device = PyTango.DeviceProxy(limaccds_device.getPluginDeviceNameFromType('bpm'))
       bpm_device.subscribe_event('bvdata', PyTango.EventType.CHANGE_EVENT, self.decode_bvdata, [])
       bpm_device.Start()
-      dict_to_add = {camera_name : [limaccds_device, bpm_device, imgdisplayreply]}
-      self.cameras_running.update(dict_to_add)
+      self.cameras_running.update({camera_name : [limaccds_device, bpm_device, imgdisplayreply]})
 
 
 
@@ -79,19 +69,22 @@ class BVWebserver:
         list_tuples_int.append(int(list_int_clean[i]))
       return list_tuples_int
     
-    if self.event_counter==0:
+    if self.event_counter==0: # To avoid the first subscribe_event callback which result in an error
       print "Subscribing to bvdata push event..."
     else:
-      camera_name=evt_bvdata.attr_name.split("/")[-2]
-      bv_data=evt_bvdata.attr_value.value[1]
-      HEADER_FORMAT=evt_bvdata.attr_value.value[0]
-      (timestamp,framenb,
-        X,Y,I,maxI,roi_top_x,roi_top_y,
-        roi_size_getWidth,roi_size_getHeight,
-        fwhm_x,fwhm_y,list_int_profile_x,list_int_profile_y, jpegData) = struct.unpack(HEADER_FORMAT, bv_data)
-      profile_x=ListStrToListInt(list_int_profile_x)
-      profile_y=ListStrToListInt(list_int_profile_y)
-      self.cameras_running[camera_name][2] = {"framenb" : framenb, "X" : X, "Y" : Y, "I" : I, "fwhm_x" : fwhm_x, "fwhm_y" : fwhm_y,  "jpegData" : jpegData, "profile_x" : profile_x, "profile_y" : profile_y} 
+      try:
+        camera_name=evt_bvdata.attr_name.split("/")[-2]
+        bv_data=evt_bvdata.attr_value.value[1]
+        HEADER_FORMAT=evt_bvdata.attr_value.value[0]
+        (timestamp,framenb,
+          X,Y,I,maxI,roi_top_x,roi_top_y,
+          roi_size_getWidth,roi_size_getHeight,
+          fwhm_x,fwhm_y,list_int_profile_x,list_int_profile_y, jpegData) = struct.unpack(HEADER_FORMAT, bv_data)
+        profile_x=ListStrToListInt(list_int_profile_x)
+        profile_y=ListStrToListInt(list_int_profile_y)
+        self.cameras_running[camera_name][2] = {"framenb" : framenb, "X" : X, "Y" : Y, "I" : I, "fwhm_x" : fwhm_x, "fwhm_y" : fwhm_y,  "jpegData" : jpegData, "profile_x" : profile_x, "profile_y" : profile_y}
+      except AttributeError, TypeError:
+        print "Subscribe event callback for ", self.cameras_running[camera_name][1], ". Just checking if camera server is alive."
 
 
   def getExposuretime(self,camera_name):
@@ -122,7 +115,7 @@ class BVWebserver:
   def getDimensionImage(self,camera_name):
     return (self.cameras_running[camera_name][0].image_width,self.cameras_running[camera_name][0].image_height)
 
-  ######################### CALLBACK FUNCTIONS FOR APPLY REQUEST #########################
+  ######################### CALLBACK FUNCTIONS TO APPLIED REQUEST #########################
   def getstatus(self,camera):
     self.camera_init(camera)
     self.event_counter = 1
@@ -146,9 +139,7 @@ class BVWebserver:
     return reply
     
   def setroi(self,camera):
-    print bottle.request
-    print bottle.request.query
-    print bottle.request.query.x
+
     try:
       self.cameras_running[camera][0].image_roi = (int(bottle.request.query.x),int(bottle.request.query.y),int(bottle.request.query.w),int(bottle.request.query.h))
     except:
@@ -157,6 +148,8 @@ class BVWebserver:
       pass
 
   def imgdisplay(self,camera):
+    if self.cameras_running[camera][1].State()==PyTango.DevState.UNKNOWN: #if the connection with device is lost (bpm stopped), we have to restart it.
+      self.cameras_running[camera][1].Start()
     self.cameras_running[camera][1].color_map = bool(int(bottle.request.query.color_map))
     self.cameras_running[camera][1].autoscale = bool(int(bottle.request.query.autoscale))
     if bottle.request.query.lut_method == "Logarithmic":
@@ -169,7 +162,7 @@ class BVWebserver:
     self.setAcqRate(float(bottle.request.query.acq_rate),camera)
 
     if bool(int(bottle.request.query.live)): #Asking for live
-      if not(self.getAcqStatus(camera)=='Running'): #if camera not already in live mode then we start live
+      if not(self.getAcqStatus(camera)=='Running'): #if camera not in live mode then we start live
         self.cameras_running[camera][0].video_live=True
     else: #Not live, only one acquisition
       if self.getAcqStatus(camera)=='Running': #if camera running live mode, we stop it.
@@ -179,9 +172,14 @@ class BVWebserver:
         self.cameras_running[camera][0].acq_nb_frames = 1 #otherwise we start a 1 frame acq
         self.cameras_running[camera][0].prepareAcq()
         self.cameras_running[camera][0].startAcq()
-    
+    if self.cameras_running[camera][2]!=None:
+      self.cameras_running[camera][2]=None
+    timestamp = time.time()
     while self.cameras_running[camera][2]==None:
       gevent.sleep((1/self.getAcqRate(camera))/10)
+      if time.time()-timestamp>5*(1/self.getAcqRate(camera)): # not a beautifull way to deal with pending queries
+        self.cameras_running[camera][0].video_live=False
+        return {"stopLive" : True}
 
     reply = self.cameras_running[camera][2] # should contain bvdata at this point
     if bottle.request.query.beammark_x!="undefined" and bottle.request.query.beammark_y!="undefined":
@@ -213,30 +211,7 @@ class BVWebserver:
     else:
       self.cameras_running[camera][1].ResetBackground()
         
-######################### CALLBACK FUNCTIONS FOR APPLY REQUEST : END #########################
-
-
-  def register_routes(self):
-    self.app.route('/', callback=self.index)
-    self.app.route('/:camera/', callback=self.get_camera_page)
-    self.app.route('/webpack_output/<filename>', callback=self.server_static)
-
-    self.app.route('/:camera/api/get_status', callback=self.getstatus)
-    self.app.route('/:camera/api/set_roi', callback=self.setroi)
-    self.app.route('/:camera/api/img_display_config', callback=self.imgdisplay)
-    self.app.route('/:camera/api/update_calibration', callback=self.updatecalibration)
-    self.app.route('/:camera/api/lock_beam_mark', callback=self.lockbeammark)
-    self.app.route('/:camera/api/get_intensity', callback=self.getintensity)
-    self.app.route('/:camera/api/set_background', callback=self.setbackground)
-
-    
-
-  def run_forever(self):
-    try:
-      self.app.run(server="gevent", host=self.host, port=self.port)
-    except KeyboardInterrupt:
-      print "Stopping Webserver."
-      sys.exit()
+######################### CALLBACK FUNCTIONS TO APPLIED REQUEST : END #########################
 
 
 
@@ -276,6 +251,28 @@ class BVWebserver:
     return bottle.static_file("index.html", root=os.path.dirname(os.path.abspath(__file__)))
 ######################### BOTTLE ROUTES METHODS FOR BROSWER DISPLAY : END #########################
 
+
+  def register_routes(self):
+    self.app.route('/', callback=self.index)
+    self.app.route('/:camera/', callback=self.get_camera_page)
+    self.app.route('/webpack_output/<filename>', callback=self.server_static)
+
+    self.app.route('/:camera/api/get_status', callback=self.getstatus)
+    self.app.route('/:camera/api/set_roi', callback=self.setroi)
+    self.app.route('/:camera/api/img_display_config', callback=self.imgdisplay)
+    self.app.route('/:camera/api/update_calibration', callback=self.updatecalibration)
+    self.app.route('/:camera/api/lock_beam_mark', callback=self.lockbeammark)
+    self.app.route('/:camera/api/get_intensity', callback=self.getintensity)
+    self.app.route('/:camera/api/set_background', callback=self.setbackground)
+
+    
+
+  def run_forever(self):
+    try:
+      self.app.run(server="gevent", host=self.host, port=self.port)
+    except KeyboardInterrupt:
+      print "Stopping Webserver."
+      sys.exit()
 
  ########--------------------------------------------------------------------------------------########
 if __name__=="__main__":

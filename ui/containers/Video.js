@@ -3,7 +3,7 @@ import ReactDom from 'react-dom';
 import { Navbar,Nav,NavItem,NavDropdown,MenuItem,Form,FormGroup,FormControl,Col,ControlLabel,Button,Tab,Tabs,Radio,dropdown,DropdownButton,ButtonGroup,Checkbox,Glyphicon,Image,OverlayTrigger,Overlay,Tooltip,SplitButton } from 'react-bootstrap';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import {linearClicked,logarithmicClicked,autoscaleChecked,temperatureChecked,yChecked,updateBackground,setCrosshair,setRoi,rotation} from '../actions/video.js'
+import {linearClicked,logarithmicClicked,autoscaleChecked,temperatureChecked,updateBackground,setCrosshair,setRoi,rotation} from '../actions/video.js'
 import {resetRoi,resetCrosshair,switchDimensions} from '../actions/canvas.js'
 import {setImgDisplay} from '../actions/options.js'
 import Dropdown from '../components/dropdown.js'
@@ -18,7 +18,6 @@ class Video extends React.Component {
     this.logarithmicClicked=this.logarithmicClicked.bind(this);
     this.autoscaleChecked=this.autoscaleChecked.bind(this);
     this.temperatureChecked=this.temperatureChecked.bind(this);
-    this.yChecked = this.yChecked.bind(this);
     this.crosshair = this.crosshair.bind(this);
     this.background = this.background.bind(this);
     this.roi = this.roi.bind(this);
@@ -53,10 +52,6 @@ class Video extends React.Component {
     this.props.temperatureChecked();
   }
 
-  yChecked(){
-    this.props.yChecked();
-  }
-
   crosshair(){
     this.props.setCrosshair();
   }
@@ -79,9 +74,6 @@ class Video extends React.Component {
 
   resetROI(){
     this.props.resetRoi();
-    /*if(this.props.activeCrosshair){
-      this.crosshair();
-    }*/
     this.props.resetCrosshair();
     if(this.props.activeBkgnd===true){ //if there is a bkg when we reset ROI, then we need to reset it because of changes in dimensions.
       this.background();
@@ -90,9 +82,7 @@ class Video extends React.Component {
   }
 
   rotation(rotate){
-    //MODIFIER WIDTH ET HEIGHT ICI car etat dans canvas
     if(this.props.rotate % 90 ===0 || this.props.rotate % 270 === 0){
-      //this.props.switchDimensions(Math.abs(this.props.windowHeight),Math.abs(this.props.windowWidth));
       this.props.rotation(rotate);
     }
     else {
@@ -104,20 +94,19 @@ class Video extends React.Component {
   graph(){
     
     var data = [];
-    for(let i=0;i <= this.props.profileX.length;i=i+2){
-      data.push([this.props.profileX[i], this.props.profileX[i+1]]);
+    for(let i=0;i <= this.props.profileX.length;i++){
+      data.push([i, this.props.profileX[i]]);
     }
     
     var g = new Dygraph(document.getElementById("graph1"), data,
             {
-              title:'Projection along X axis',
               drawPoints: false,
               showRoller: false,
               legend : 'never',
               dateWindow : [0, this.props.profileX.length],
               labels: ['Time', 'Random'],
               width : this.props.windowWidth,
-              height : this.props.windowHeight/3,
+              height : this.props.windowHeight/2,
               axes: {
                 y: {
                   axisLabelFormatter: function(y) {
@@ -130,22 +119,21 @@ class Video extends React.Component {
 
 
     var data2 = [];
-    console.log(this.props.profileY);
-    for(let i=0;i <= this.props.profileY.length;i=i+2){
-      data2.push([this.props.profileY[i+1],this.props.profileY[i]])
+
+    for(let i=0; i < this.props.profileY.length; i++){
+      data2.push([this.props.profileY[this.props.profileY.length-(i+1)],i])
     }
 
     var g2 = new Dygraph(document.getElementById("graph2"), data2,
             {
-              title:'Projection along Y axis',
               drawPoints: false,
               showRoller: false,
               legend : 'never',
-              dateWindow : [this.props.profileY.length,0],
+              dateWindow : [Math.min(...this.props.profileY),Math.max(...this.props.profileY)],
               labels: ['Time', 'Random'],
               height : this.props.windowHeight,
-              width : this.props.windowWidth,
-
+              width : this.props.windowWidth/2,
+              
               axes: {
                 x: {
                   axisLabelFormatter: function(x) {
@@ -167,10 +155,6 @@ class Video extends React.Component {
                               X={this.props.beam_markX} Y={this.props.beam_markY}</Tooltip>
     );
 
-    const resetCrosshair = (
-        <Tooltip id="tooltip">Click here to reset crosshair</Tooltip>
-    );
-
     const background = (
         <Tooltip id="tooltip">Click here to take/reset background</Tooltip>
     );
@@ -179,16 +163,8 @@ class Video extends React.Component {
         <Tooltip id="tooltip">Click here to activate/desactivate ROI mod</Tooltip>
     );
 
-    const resetRoi = (
-        <Tooltip id="tooltip">Click here to reset ROI</Tooltip>
-    );
-
     const rotation = (
         <Tooltip id="tooltip">Click here to rotate the image of 90 degrees</Tooltip>
-    );
-
-    const y = (
-        <Tooltip id="tooltip">Click here to set/unset autoscale</Tooltip>
     );
 
     return (
@@ -241,7 +217,6 @@ class Video extends React.Component {
                 <div className="col-md-7">
                   <Canvas ref='canvas' />
                 </div>
-                {/*<div className="col-md-3" style={styles_rotate_graph}>*/}
                 <div className="col-md-3">
                   <div id='graph2'/>
                 </div>
@@ -261,33 +236,21 @@ class Video extends React.Component {
 
 }
 
-var styles_rotate_graph = {
-  transform: "rotate(90deg)"
-};
-
 function mapStateToProps(state) {
   return {
     selectedLut:state.video.selectedLut,
-    autoscaleCheckedBool : state.video.autoscaleCheckedBool,
-    temperatureCheckedBool : state.video.temperatureCheckedBool,
-    yCheckedBool : state.video.yCheckedBool,
     activeBkgnd: state.video.activeBkgnd,
-    liveCheckedBool: state.options.liveCheckedBool,
     liveRun: state.options.liveRun,
     activeCrosshair: state.video.activeCrosshair,
     beam_markX: state.canvas.beam_markX,
     beam_markY: state.canvas.beam_markY,
     activeROI:state.video.activeROI,
-    img_num: state.canvas.img_num,
     resetDesactivated: state.canvas.resetDesactivated,
     rotate: state.video.rotation,
     windowWidth:state.canvas.windowWidth,
     windowHeight:state.canvas.windowHeight,
     profileX : state.canvas.profileX,
     profileY : state.canvas.profileY,
-
-    imageMaxWidth: state.canvas.imageMaxWidth,
-    imageMaxHeight: state.canvas.imageMaxHeight,
     windowWidth:state.canvas.windowWidth,
     windowHeight:state.canvas.windowHeight,
   };
@@ -299,7 +262,6 @@ function mapDispatchToProps(dispatch) {
     logarithmicClicked: bindActionCreators(logarithmicClicked, dispatch),
     autoscaleChecked: bindActionCreators(autoscaleChecked, dispatch),
     temperatureChecked: bindActionCreators(temperatureChecked, dispatch),
-    yChecked: bindActionCreators(yChecked,dispatch),
     updateBackground: bindActionCreators(updateBackground,dispatch),
     setCrosshair: bindActionCreators(setCrosshair,dispatch),
     setRoi: bindActionCreators(setRoi, dispatch),

@@ -156,8 +156,6 @@ function mapStateToProps(state) {
     calib_y: state.options.calib_y,
     applyDisabled:state.options.applyDisabled,
     liveRun: state.options.liveRun,
-    beam_markX:state.canvas.beam_markX,
-    beam_markY:state.canvas.beam_markY,
     minExposureTime:state.options.minExposureTime,
     maxExposureTime:state.options.maxExposureTime,
     minLatencyTime : state.options.minLatencyTime,
