@@ -18,7 +18,6 @@ class Infos extends React.Component {
   // Message is now closed after new image. No need of this but still keeping it just in case.
   closeClicked(){
     this.props.hideAlert();
-
   }
 
   render(){

@@ -103,9 +103,6 @@ class Canvas extends React.Component {
       }
       this.image.src=""; // Might avoid caching image.
     }
-    if(this.props.liveRun===1 && prevProps.acqImage==0){
-      this.props.setImgDisplay();
-    }
     
   }
 

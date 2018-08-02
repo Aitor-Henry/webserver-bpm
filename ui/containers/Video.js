@@ -24,9 +24,9 @@ class Video extends React.Component {
   }
 
 
-  componentDidUpdate(){
+  componentDidUpdate(prevProps){
     if(this.props.profileX.length != 0 && this.props.profileY.length != 0){
-      this.graph();
+      this.graph(prevProps);
     }
     
   }
@@ -58,7 +58,7 @@ class Video extends React.Component {
     }
   }
 
-  graph(){
+  graph(prevProps){
     if(this.graph_profilX===undefined && this.graph_profilY===undefined){
       var data = [];
       for(let i=0;i <= this.props.profileX.length;i++){
@@ -106,7 +106,9 @@ class Video extends React.Component {
                                      width : this.props.windowWidth/2,
                                      height : this.props.windowHeight})
     }
-     
+    if(this.props.liveRun===1 && this.props.profileX!==prevProps.profileX){
+      this.props.setImgDisplay();
+    }
   }
 
   
