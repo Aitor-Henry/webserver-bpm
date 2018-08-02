@@ -1,17 +1,16 @@
 //////////////////////////////////////////BUTTON////////////////////////////////////////////////////////
 export function setImgDisplay(){
-
   return (dispatch,getState) => {
     const state = getState()
-    fetch('/'+state.bpmState.client_id+'/api/img_display_config?color_map='+state.video.temperatureCheckedBool+'&autoscale='+state.video.autoscaleCheckedBool+'&autoscale_option='+state.video.selectedLut+'&x='+state.options.calib_x+'&y='+state.options.calib_y+'&live='+state.options.liveCheckedBool+'&exp_t='+state.options.exposureTimeValue+'&acq_rate='+state.options.samplingRateValue)
+    fetch('/'+state.bpmState.client_id+'/api/img_display_config?beammark_x='+state.canvas.beam_markX+'&beammark_y='+state.canvas.beam_markY+'&color_map='+state.video.temperatureCheckedBool+'&autoscale='+state.video.autoscaleCheckedBool+'&lut_method='+state.video.selectedLut+'&calib_x='+state.options.calib_x+'&calib_y='+state.options.calib_y+'&live='+state.options.liveRun+'&exp_t='+state.options.exposureTimeValue+'&acq_rate='+state.options.samplingRateValue)
       .then((response) => {
         if(!response.ok){
           throw Error(response.statusText);
         }
-
         return response;
-      }) .then(response => dispatch(buttonAcquirePressed()))
-         .catch(() => alert('Error, please check server console, setImgDisplay'))
+      }).then(response => response.json()) 
+        .then(response => dispatch(updateData(response)))
+        .catch(() => alert('Error, please check server console, setImgDisplay'))
   }
 }
 
@@ -30,10 +29,13 @@ export function update_calibration_apply(){ // Set calibration in Bpm device
   }
 }
 
+export function updateData(data){
+  return { type: 'UPDATE_DATA',data}
+}
+
 export function buttonAcquirePressed(){
   return { type: 'BUTTON_ACQUIRE_PRESSED'}
 }
-
 
 export function update_calibration_apply_done(){
   return { type: 'UPDATE_CALIBRATION_APPLY_DONE'}
@@ -73,6 +75,14 @@ export function textEnterCalib_Y(text) {
 
 export function textEmptyY() {
   return { type: "TEXT_EMPTY_Y"}
+}
+
+export function latencyTimeNotInRange() {
+  return { type: "LATENCY_NOT_IN_RANGE"}
+}
+
+export function exposureTimeNotInRange() {
+  return { type: "EXPOSURE_TIME_NOT_IN_RANGE"}
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

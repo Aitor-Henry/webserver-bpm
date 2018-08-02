@@ -27,8 +27,7 @@ const initialState = {
   windowWidth:undefined,
   windowHeight:undefined,
   imageRatio:undefined,
-  imageSrc:""
- 
+  imageSrc:"",
 };
 
 
@@ -38,7 +37,12 @@ export default function canvas(state = initialState, action) {
   switch (action.type) {
     case 'UPDATE_DATA' :
     {
-      return Object.assign({}, state, {alertHidden:true, imageSrc:action.data.jpegData, intensityXY:action.data.intensity, img_num : action.data.framenb, fwhmX: action.data.fwhm_x,fwhmY: action.data.fwhm_y, intensity : action.data.I, bx: action.data.X,by: action.data.Y, profileX : action.data.profile_x , profileY : action.data.profile_y })
+      if(action.data.stopLive===true){
+        return Object.assign({}, state, {alertHidden:true})
+      }else{
+        return Object.assign({}, state, {alertHidden:true, imageSrc:action.data.jpegData, intensityXY:action.data.intensity, img_num : action.data.framenb, fwhmX: action.data.fwhm_x,fwhmY: action.data.fwhm_y, intensity : action.data.I, bx: action.data.X,by: action.data.Y, profileX : action.data.profile_x , profileY : action.data.profile_y })
+      }
+      
     }
 
     case 'SET_BEAM_MARK' :

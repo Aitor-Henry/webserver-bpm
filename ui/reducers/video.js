@@ -2,8 +2,6 @@ const initialState = {
   selectedLut:"Linear",
   autoscaleCheckedBool: 0,
   temperatureCheckedBool:0,
-  yCheckedBool: 0,
-  maxValue: "",
   backgroundstate: 1,
   activeBkgnd:false,
   crosshair: 0,
@@ -54,26 +52,6 @@ export default function video(state = initialState, action) {
       else{
         return Object.assign({}, state, {temperatureCheckedBool : 0})
       }
-    }
-
-    case 'Y_CHECKED':
-    {
-      if(state.yCheckedBool === 0){
-        return Object.assign({}, state, {yCheckedBool : 1})
-      }
-      else{
-        return Object.assign({}, state, {yCheckedBool : 0})
-      }
-    }
-
-    case 'TEXT_ENTER_MAX':
-    {
-      return Object.assign({}, state, {maxValue : action.text})
-    }
-
-    case 'TEXT_EMPTY_MAX':
-    {
-      return Object.assign({}, state, {maxValue : ""})
     }
 
     case 'BACKGROUND_STATE':

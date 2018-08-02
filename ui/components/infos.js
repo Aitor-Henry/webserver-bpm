@@ -15,11 +15,9 @@ class Infos extends React.Component {
 
   }
 
-
- 
+  // Message is now closed after new image. No need of this but still keeping it just in case.
   closeClicked(){
     this.props.hideAlert();
-
   }
 
   render(){
@@ -27,7 +25,7 @@ class Infos extends React.Component {
     return (
       <div className="container-fluid">
         <div className="row">
-        <div className="col-md-2"></div>
+        <div className="col-md-1"></div>
           <div className="col-md-9">
           <h3> Frame {this.props.img_num} | Fwhm {Math.round(this.props.fwhmX*100)/100} x {Math.round(this.props.fwhmY*100)/100} | Intensity={this.props.intensity} bx={Math.round(this.props.bx)} by= {Math.round(this.props.by)}
           <p hidden={!this.props.activeROI}>ROI: x={Math.round(this.props.start_X_display*this.props.calib_x)} y={Math.round(this.props.start_Y_display*this.props.calib_y)} w={Math.round(this.props.width*this.props.calib_x)} h={Math.round(this.props.height*this.props.calib_y)}  </p></h3>
@@ -36,7 +34,7 @@ class Infos extends React.Component {
         <div className="row">
         <div className="col-md-5"></div>
           <div className="col-md-2">
-          <Alert bsStyle="success" hidden={this.props.alertHidden}> ROI is apply/reset successfully ... Acquire new image.<Glyphicon onClick={this.closeClicked}  glyph={'remove'} /></Alert>
+          <Alert bsStyle="success" hidden={this.props.alertHidden}> ROI is apply/reset successfully... New image incoming...<Glyphicon onClick={this.closeClicked}  glyph={'remove'} /></Alert>
           </div>
         </div>
       </div>
