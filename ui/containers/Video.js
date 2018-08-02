@@ -13,18 +13,13 @@ import Dygraph from 'dygraphs'
 class Video extends React.Component {
   constructor(props) {
     super(props);
-
-    this.linearClicked=this.linearClicked.bind(this);
-    this.logarithmicClicked=this.logarithmicClicked.bind(this);
-    this.autoscaleChecked=this.autoscaleChecked.bind(this);
-    this.temperatureChecked=this.temperatureChecked.bind(this);
-    this.crosshair = this.crosshair.bind(this);
-    this.background = this.background.bind(this);
-    this.roi = this.roi.bind(this);
     this.resetROI = this.resetROI.bind(this);
     this.resetCROSSHAIR = this.resetCROSSHAIR.bind(this);
     this.rotation = this.rotation.bind(this);
     this.graph = this.graph.bind(this);
+
+    this.graph_profilX = undefined;
+    this.graph_profilY = undefined;
     
   }
 
@@ -35,48 +30,20 @@ class Video extends React.Component {
     }
     
   }
-
-  linearClicked(){
-    this.props.linearClicked();
-  }
-
-  logarithmicClicked(){
-    this.props.logarithmicClicked();
-  }
-
-  autoscaleChecked(){
-    this.props.autoscaleChecked();
-  }
-
-  temperatureChecked(){
-    this.props.temperatureChecked();
-  }
-
-  crosshair(){
-    this.props.setCrosshair();
-  }
-
+ 
   resetCROSSHAIR(){
     if(this.props.activeCrosshair){
-      this.crosshair();
+      this.props.setCrosshair();
     }
     this.props.resetCrosshair();
 
-  }
-
-  background(){
-    this.props.updateBackground();
-  }
-
-  roi(){
-    this.props.setRoi();
   }
 
   resetROI(){
     this.props.resetRoi();
     this.props.resetCrosshair();
     if(this.props.activeBkgnd===true){ //if there is a bkg when we reset ROI, then we need to reset it because of changes in dimensions.
-      this.background();
+      this.props.updateBackground();
     }
     this.props.setImgDisplay();
   }
@@ -92,57 +59,54 @@ class Video extends React.Component {
   }
 
   graph(){
+    if(this.graph_profilX===undefined && this.graph_profilY===undefined){
+      var data = [];
+      for(let i=0;i <= this.props.profileX.length;i++){
+        data.push([i, this.props.profileX[i]]);
+      }
+      this.graph_profilX = new Dygraph(document.getElementById("graph1"), data, {drawPoints: false, showRoller: false, legend : 'never',labels: ['Profile_X', 'Intensity'], dateWindow : [0, this.props.profileX.length], width : this.props.windowWidth, height : this.props.windowHeight/2,
+                                                                              axes: {
+                                                                                y: {
+                                                                                  axisLabelFormatter: function(y) {
+                                                                                    return '';
+                                                                                  }
+                                                                                }
+                                                                              }}
+                                    );
     
-    var data = [];
-    for(let i=0;i <= this.props.profileX.length;i++){
-      data.push([i, this.props.profileX[i]]);
-    }
-    
-    var g = new Dygraph(document.getElementById("graph1"), data,
-            {
-              drawPoints: false,
-              showRoller: false,
-              legend : 'never',
-              dateWindow : [0, this.props.profileX.length],
-              labels: ['Time', 'Random'],
-              width : this.props.windowWidth,
-              height : this.props.windowHeight/2,
-              axes: {
-                y: {
-                  axisLabelFormatter: function(y) {
-                    return '';
-                  }
-                }
-              }
-            });
-            
-
-
     var data2 = [];
-
+    for(let i=0; i < this.props.profileY.length; i++){
+      data2.push([this.props.profileY[this.props.profileY.length-(i+1)],i])
+    }                                
+    this.graph_profilY = new Dygraph(document.getElementById("graph2"), data2, {drawPoints: false, showRoller: false, legend : 'never',labels: ['Intensity', 'Profile_Y'], dateWindow : [Math.min(...this.props.profileY),Math.max(...this.props.profileY)], width : this.props.windowWidth/2, height : this.props.windowHeight,
+                                                                              axes: {
+                                                                                x: {
+                                                                                  axisLabelFormatter: function(x) {
+                                                                                    return '';
+                                                                                  }
+                                                                                }
+                                                                              }}
+                                    );
+    } else {
+      var data = [];
+      for(let i=0;i <= this.props.profileX.length;i++){
+        data.push([i, this.props.profileX[i]]);
+      }
+      this.graph_profilX.updateOptions({'file' : data,
+                                      dateWindow : [0, this.props.profileX.length],
+                                      width : this.props.windowWidth,
+                                      height : this.props.windowHeight/2,})
+      
+    var data2 = [];
     for(let i=0; i < this.props.profileY.length; i++){
       data2.push([this.props.profileY[this.props.profileY.length-(i+1)],i])
     }
-
-    var g2 = new Dygraph(document.getElementById("graph2"), data2,
-            {
-              drawPoints: false,
-              showRoller: false,
-              legend : 'never',
-              dateWindow : [Math.min(...this.props.profileY),Math.max(...this.props.profileY)],
-              labels: ['Time', 'Random'],
-              height : this.props.windowHeight,
-              width : this.props.windowWidth/2,
-              
-              axes: {
-                x: {
-                  axisLabelFormatter: function(x) {
-                    return '';
-                  }
-                },
-              }
-            });
-
+    this.graph_profilY.updateOptions({'file' : data2,
+                                     dateWindow : [Math.min(...this.props.profileY),Math.max(...this.props.profileY)],
+                                     width : this.props.windowWidth/2,
+                                     height : this.props.windowHeight})
+    }
+     
   }
 
   
@@ -178,27 +142,27 @@ class Video extends React.Component {
                   <ButtonGroup>
 
                     <OverlayTrigger placement="left" overlay={crosshair}>
-                      <SplitButton title='Lock Crosshair'   id="bg-vertical-splitbuttons-1" onClick={this.crosshair} disabled={this.props.liveRun ===1 || this.props.rotate!=0 || this.props.beam_markX===undefined || this.props.beam_markY===undefined} active={this.props.activeCrosshair}>
+                      <SplitButton title='Lock Crosshair'   id="bg-vertical-splitbuttons-1" onClick={this.props.setCrosshair} disabled={this.props.liveRun ===1 || this.props.rotate!=0 || this.props.beam_markX===undefined || this.props.beam_markY===undefined} active={this.props.activeCrosshair}>
                         <MenuItem onClick={this.resetCROSSHAIR} disabled={this.props.liveRun ===1}> Reset <Glyphicon glyph="screenshot" /></MenuItem>
                       </SplitButton>
                     </OverlayTrigger>
 
                     <OverlayTrigger placement="top" overlay={background}>
-                      <Button onClick={this.background} active={this.props.activeBkgnd} disabled={this.props.liveRun ===1}><Glyphicon glyph="picture" /> Bkgnd</Button>
+                      <Button onClick={this.props.updateBackground} active={this.props.activeBkgnd} disabled={this.props.liveRun ===1}><Glyphicon glyph="picture" /> Bkgnd</Button>
                     </OverlayTrigger>
 
                     <OverlayTrigger placement="top" overlay={roi}>
-                      <SplitButton title='ROI'   id="bg-vertical-splitbuttons-2" onClick={this.roi} disabled={this.props.liveRun ===1 || this.props.rotate!=0} active={this.props.activeROI}>
+                      <SplitButton title='ROI'   id="bg-vertical-splitbuttons-2" onClick={this.props.setRoi} disabled={this.props.liveRun ===1 || this.props.rotate!=0} active={this.props.activeROI}>
                       <MenuItem onClick={this.resetROI} disabled={this.props.liveRun ===1 || this.props.resetDesactivated}><Glyphicon glyph="remove" /> Reset ROI</MenuItem>
                     </SplitButton>
                     </OverlayTrigger>
 
                     <DropdownButton title={this.props.selectedLut} disabled={this.props.liveRun ===1} id="bg-vertical-dropdown-1">
-                      <MenuItem eventKey="1" onClick={this.linearClicked}>Linear</MenuItem>
-                      <MenuItem eventKey="2" onClick={this.logarithmicClicked}>Logarithmic</MenuItem>
+                      <MenuItem eventKey="1" onClick={this.props.linearClicked}>Linear</MenuItem>
+                      <MenuItem eventKey="2" onClick={this.props.logarithmicClicked}>Logarithmic</MenuItem>
                       <MenuItem divider />
-                      <Checkbox onChange={this.autoscaleChecked}>Autoscale</Checkbox>
-                      <Checkbox onChange={this.temperatureChecked}>Temperature color</Checkbox>
+                      <Checkbox onChange={this.props.autoscaleChecked}>Autoscale</Checkbox>
+                      <Checkbox onChange={this.props.temperatureChecked}>Temperature color</Checkbox>
                     </DropdownButton>
 
                     <OverlayTrigger placement="top" overlay={rotation}>
@@ -218,12 +182,12 @@ class Video extends React.Component {
                   <Canvas ref='canvas' />
                 </div>
                 <div className="col-md-3">
-                  <div id='graph2'/>
+                  <div id='graph2'>{this.props.graph_profilY}</div>
                 </div>
               </div>
               <div className="row">
                 <div className="col-md-6">
-                  <div id='graph1'/>
+                  <div id='graph1'>{this.props.graph_profilX}</div>
                 </div>
               </div>
             </Tabs>
@@ -235,6 +199,11 @@ class Video extends React.Component {
   }
 
 }
+
+
+/*
+
+*/
 
 function mapStateToProps(state) {
   return {

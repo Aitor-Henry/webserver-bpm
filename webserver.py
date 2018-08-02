@@ -269,7 +269,7 @@ class BVWebserver:
 
   def run_forever(self):
     try:
-      self.app.run(server="gevent", host=self.host, port=self.port)
+      self.app.run(server="gevent", host=self.host, port=self.port, quiet=True)
     except KeyboardInterrupt:
       print "Stopping Webserver."
       sys.exit()

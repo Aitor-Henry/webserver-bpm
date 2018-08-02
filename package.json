@@ -7,7 +7,7 @@
   "version": "0.1.0",
   "repository": {
     "type": "git",
-    "url": "https://gitlab.esrf.fr/quentin.sibue/test-React-Webpack-Redux"
+    "url": "https://gitlab.esrf.fr/limagroup/bpm-web"
   },
   "license": "MIT",
   "main": "main.jsx",

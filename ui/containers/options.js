@@ -12,11 +12,8 @@ class Options extends React.Component {
     this.buttonAcquirePressed = this.buttonAcquirePressed.bind(this);
     this.textStateExposure = this.textStateExposure.bind(this);
     this.textStateSampling = this.textStateSampling.bind(this);
-    this.liveChecked = this.liveChecked.bind(this);
     this.textStateCalib_x = this.textStateCalib_x.bind(this);
     this.textStateCalib_y = this.textStateCalib_y.bind(this);
-    this.apply = this.apply.bind(this);
-
   }
 
 
@@ -77,16 +74,6 @@ class Options extends React.Component {
   }
 
 
-  liveChecked(){
-    this.props.liveChecked();
-  }
-
-
-  apply(){
-    this.props.update_calibration_apply();
-  }
-
-
   render(){
     return (
       <div className="container-fluid">
@@ -102,7 +89,7 @@ class Options extends React.Component {
           </div>
           <div className="col-md-1"></div>
           <div className="col-md-4">
-          <input type="checkbox" onChange={this.liveChecked} checked={this.props.liveCheckedBool === 1} disabled={this.props.liveRun === 1} />
+          <input type="checkbox" onChange={this.props.liveChecked} checked={this.props.liveCheckedBool === 1} disabled={this.props.liveRun === 1} />
           <Col componentClass={ControlLabel} sm={13}>Live</Col>
           </div>
         </div>
@@ -132,7 +119,7 @@ class Options extends React.Component {
               </FormGroup>
             </Form>
             <MenuItem divider />
-            <Button disabled={this.props.applyDisabled || this.props.liveRun === 1 } onClick={this.apply} >Apply</Button>
+            <Button disabled={this.props.applyDisabled || this.props.liveRun === 1 } onClick={this.props.update_calibration_apply} >Apply</Button>
             {" "}
           </Dropdown>
           </div>

@@ -17,32 +17,31 @@ class Canvas extends React.Component {
     this.handleMouseMove = this.handleMouseMove.bind(this);
     this.draw_ROI_Marker = this.draw_ROI_Marker.bind(this);
     this.drawing = false;
+    this.updateDimensions = this.updateDimensions.bind(this);
     
   }
 
   componentDidMount(){
-    window.addEventListener("resize", this.updateDimensions.bind(this), {passive :true});
+    window.addEventListener("resize", this.updateDimensions());
   }
 
-  componentDidUpdate(prevProps, prevState){
-    console.log(prevProps!=this.props);
+  componentWillUnmount(){
+    window.removeEventListener("resize", this.updateDimensions());
+  }
+
+  componentDidUpdate(prevProps){
     if(prevProps!=this.props){
       this.updateImage(prevProps);
     }
   }
+  
 
-  componentWillUnmount(){
-    window.removeEventListener("resize", this.updateDimensions.bind(this));
-  }
-    
 
   updateImage(prevProps){
-    console.log("UPDATE IMAGE")
     const ctx = this.refs.myCanvas.getContext('2d');
-    let src = this.props.imageSrc;
-    this.image.src = "data:image/jpg;base64,"+src;
+    this.image.src = "data:image/jpg;base64,"+this.props.imageSrc;
+    
     this.image.onload = () => {
-      ctx.save();
 
       if(this.props.rotation === 90 || this.props.rotation === 270){
         ctx.translate(this.props.windowWidth/2,this.props.windowHeight/2);
@@ -57,7 +56,6 @@ class Canvas extends React.Component {
       else{
         ctx.drawImage(this.image, 0, 0,this.props.windowWidth,this.props.windowHeight);
       }
-      this.image.src = "";
       if(this.props.beam_markX != undefined && this.props.beam_markY != undefined && !this.props.activeROI && this.props.rotation === 0){
         if(this.props.temperatureCheckedBool===1){
           ctx.strokeStyle = "#ffffff" // white cross
@@ -103,7 +101,7 @@ class Canvas extends React.Component {
         ctx.stroke();
         ctx.closePath();
       }
-      ctx.restore();
+      this.image.src=""; // Might avoid caching image.
     }
     if(this.props.liveRun===1 && prevProps.acqImage==0){
       this.props.setImgDisplay();

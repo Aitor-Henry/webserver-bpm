@@ -1,7 +1,4 @@
-
-
 const initialState = {
-
   buttonAcquireStyle : 'success',
   buttonAcquireGlyphiconText : "play",
   buttonAcquireText : "Acquire",
