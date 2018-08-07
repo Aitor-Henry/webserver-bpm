@@ -1,26 +1,10 @@
 module.exports ={
-  entry:{ //Le fichier d'entrer qui nous interesse
+  entry:{
     main: ['./index.js']
   },
-  output: { //Le fichier en sortie
+  output: {
     path: __dirname + '/webpack_output',
-    filename: 'bundle.js' //Le fichier en sortie sera bundle.js
-  },
-
-  devServer: {
-    host: "0.0.0.0",
-    historyApiFallback:true,
-    proxy: {
-      '/api/*': {
-        target: "http://localhost:8066",
-	      xfwd: true
-      },
-      '/bcu_basler/api/image_channel':{
-        target: "ws://localhost:8066",
-        ws: true,
-        secure: false
-      }
-    }
+    filename: 'bundle.js'
   },
 
   module: {
@@ -72,16 +56,7 @@ module.exports ={
         test: /\.(woff(2)?|ttf|eot|svg)(\?v=[a-z0-9]\.[a-z0-9]\.[a-z0-9])?$/,
         loader: 'url-loader?limit=100000'
       },
-      /*{
-        test: /\.html$/,
-          use: [ {
-            loader: 'html-loader',
-            options: {
-              minimize: true
-            }
-          }
-        ]
-      },*/
+
 
 	  ]
   }

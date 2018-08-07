@@ -3,7 +3,7 @@
     "start": "npm run dev",
     "dev": "webpack-dev-server"
   },
-  "name": "test-React-Webpack-Redux",
+  "name": "bpm-webserver-packages",
   "version": "0.1.0",
   "repository": {
     "type": "git",

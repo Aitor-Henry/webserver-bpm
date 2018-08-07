@@ -203,9 +203,6 @@ class Video extends React.Component {
 }
 
 
-/*
-
-*/
 
 function mapStateToProps(state) {
   return {

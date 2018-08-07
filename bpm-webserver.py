@@ -7,7 +7,6 @@ import bottle
 import socket
 import PyTango
 import struct
-import logging
 import sys
 
 # patch socket module
@@ -143,7 +142,7 @@ class BVWebserver:
     try:
       self.cameras_running[camera][0].image_roi = (int(bottle.request.query.x),int(bottle.request.query.y),int(bottle.request.query.w),int(bottle.request.query.h))
     except:
-      logging.exception("Could not set roi")
+      print "Could not set roi"
     else:
       pass
 
