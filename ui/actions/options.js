@@ -18,7 +18,7 @@ export function update_calibration_apply(){ // Set calibration in Bpm device
 
   return (dispatch,getState) => {
     const state = getState()
-    fetch('/'+state.bpmState.client_id+'/api/update_calibration?x='+state.options.calib_x+'&y='+state.options.calib_y)
+    fetch('/'+state.bpmState.client_id+'/api/update_calibration?calib_x='+state.options.calib_x+'&calib_y='+state.options.calib_y)
       .then((response) => {
         if(!response.ok){
           throw Error(response.statusText);
