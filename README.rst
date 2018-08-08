@@ -31,6 +31,7 @@ Was working with following versions
 - npm : 6.1.0
 
 other dependencies are listed in package.json, and they are installed in a node_modules directory when you run "npm install" in the package.json directory.
+If you need to re-write the web application and bundle it again using webpack, try to install webpack and run "npx webpack --config webpack.config.js"
 
 Run
 ------------

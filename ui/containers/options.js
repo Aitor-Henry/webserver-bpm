@@ -66,9 +66,7 @@ class Options extends React.Component {
       if((1/ReactDom.findDOMNode(this.refs.sampling).value)-this.props.exposureTimeValue > this.props.maxLatencyTime || (1/ReactDom.findDOMNode(this.refs.sampling).value)-this.props.exposureTimeValue < this.props.minLatencyTime){
         this.props.latencyTimeNotInRange();
       }else{
-        if(this.props.liveRun===this.props.liveSet || (this.props.liveSet==1 && this.props.liveRun==0)){
-          this.props.setImgDisplay();
-        }
+        this.props.setImgDisplay();
       }
     }
   }

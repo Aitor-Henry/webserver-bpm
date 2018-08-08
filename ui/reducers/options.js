@@ -32,9 +32,9 @@ export default function options(state = initialState, action) {
     case 'BUTTON_ACQUIRE_PRESSED':
     {
       if(state.buttonAcquireStyle === 'success' && state.liveCheckedBool == 1){ // User start a live mode
-        return Object.assign({}, state, {buttonAcquireStyle:'danger',buttonAcquireText:"Stop",buttonAcquireGlyphiconText:"stop",liveCheckedBool: 0, liveRun:1, acqImage: 0})
+        return Object.assign({}, state, {buttonAcquireStyle:'danger',buttonAcquireText:"Stop",buttonAcquireGlyphiconText:"stop", liveRun:1, acqImage: 0})
       }
-      else if(state.buttonAcquireStyle === 'danger' && state.liveCheckedBool == 0){ // User stop live mode
+      else if(state.buttonAcquireStyle === 'danger' && state.liveRun == 1){ // User stop live mode
         return Object.assign({}, state, {buttonAcquireStyle:'success',buttonAcquireText:"Acquire",buttonAcquireGlyphiconText:"play", liveSet: 0, liveRun: 0, acqImage: 0})
       }
       else { // User start an acquisition of one frame

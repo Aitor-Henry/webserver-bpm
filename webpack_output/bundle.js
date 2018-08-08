@@ -30922,7 +30922,7 @@ var Video = function (_React$Component) {
         for (var i = 0; i <= this.props.profileX.length; i++) {
           data.push([i, this.props.profileX[i]]);
         }
-        this.graph_profilX = new _dygraphs2.default(document.getElementById("graph1"), data, { drawPoints: false, showRoller: false, legend: 'never', labels: ['Profile_X', 'Intensity'], dateWindow: [0, this.props.profileX.length], width: this.props.windowWidth, height: this.props.windowHeight / 2,
+        this.graph_profilX = new _dygraphs2.default(document.getElementById("graph1"), data, { drawPoints: false, showRoller: false, legend: 'never', labels: ['Profile_X', 'Intensity'], dateWindow: [0, this.props.profileX.length], width: this.props.windowWidth, height: this.props.windowHeight / 3,
           axes: {
             y: {
               axisLabelFormatter: function axisLabelFormatter(y) {
@@ -30935,7 +30935,7 @@ var Video = function (_React$Component) {
         for (var _i = 0; _i < this.props.profileY.length; _i++) {
           data2.push([this.props.profileY[this.props.profileY.length - (_i + 1)], _i]);
         }
-        this.graph_profilY = new _dygraphs2.default(document.getElementById("graph2"), data2, { drawPoints: false, showRoller: false, legend: 'never', labels: ['Intensity', 'Profile_Y'], dateWindow: [Math.min.apply(Math, _toConsumableArray(this.props.profileY)), Math.max.apply(Math, _toConsumableArray(this.props.profileY))], width: this.props.windowWidth / 2, height: this.props.windowHeight,
+        this.graph_profilY = new _dygraphs2.default(document.getElementById("graph2"), data2, { drawPoints: false, showRoller: false, legend: 'never', labels: ['Intensity', 'Profile_Y'], dateWindow: [Math.min.apply(Math, _toConsumableArray(this.props.profileY)), Math.max.apply(Math, _toConsumableArray(this.props.profileY))], width: this.props.windowWidth / 3, height: this.props.windowHeight,
           axes: {
             x: {
               axisLabelFormatter: function axisLabelFormatter(x) {
@@ -30951,7 +30951,7 @@ var Video = function (_React$Component) {
         this.graph_profilX.updateOptions({ 'file': data,
           dateWindow: [0, this.props.profileX.length],
           width: this.props.windowWidth,
-          height: this.props.windowHeight / 2 });
+          height: this.props.windowHeight / 3 });
 
         var data2 = [];
         for (var _i3 = 0; _i3 < this.props.profileY.length; _i3++) {
@@ -30959,7 +30959,7 @@ var Video = function (_React$Component) {
         }
         this.graph_profilY.updateOptions({ 'file': data2,
           dateWindow: [Math.min.apply(Math, _toConsumableArray(this.props.profileY)), Math.max.apply(Math, _toConsumableArray(this.props.profileY))],
-          width: this.props.windowWidth / 2,
+          width: this.props.windowWidth / 3,
           height: this.props.windowHeight });
       }
       if (this.props.liveRun === 1 && this.props.profileX !== prevProps.profileX) {
@@ -30969,8 +30969,6 @@ var Video = function (_React$Component) {
   }, {
     key: 'render',
     value: function render() {
-      var _this2 = this;
-
       var crosshair = _react2.default.createElement(
         _reactBootstrap.Tooltip,
         { id: 'tooltip' },
@@ -31025,7 +31023,7 @@ var Video = function (_React$Component) {
                       { placement: 'left', overlay: crosshair },
                       _react2.default.createElement(
                         _reactBootstrap.SplitButton,
-                        { title: 'Lock Crosshair', id: 'bg-vertical-splitbuttons-1', onClick: this.props.setCrosshair, disabled: this.props.liveRun === 1 || this.props.rotate != 0 || this.props.beam_markX === undefined || this.props.beam_markY === undefined, active: this.props.activeCrosshair },
+                        { title: 'Lock Crosshair', id: 'bg-vertical-splitbuttons-1', onClick: this.props.setCrosshair, disabled: this.props.liveRun === 1 || this.props.beam_markX === undefined || this.props.beam_markY === undefined, active: this.props.activeCrosshair },
                         _react2.default.createElement(
                           _reactBootstrap.MenuItem,
                           { onClick: this.resetCROSSHAIR, disabled: this.props.liveRun === 1 },
@@ -31049,7 +31047,7 @@ var Video = function (_React$Component) {
                       { placement: 'top', overlay: roi },
                       _react2.default.createElement(
                         _reactBootstrap.SplitButton,
-                        { title: 'ROI', id: 'bg-vertical-splitbuttons-2', onClick: this.props.setRoi, disabled: this.props.liveRun === 1 || this.props.rotate != 0, active: this.props.activeROI },
+                        { title: 'ROI', id: 'bg-vertical-splitbuttons-2', onClick: this.props.setRoi, disabled: this.props.liveRun === 1, active: this.props.activeROI },
                         _react2.default.createElement(
                           _reactBootstrap.MenuItem,
                           { onClick: this.resetROI, disabled: this.props.liveRun === 1 || this.props.resetDesactivated },
@@ -31081,38 +31079,6 @@ var Video = function (_React$Component) {
                         _reactBootstrap.Checkbox,
                         { onChange: this.props.temperatureChecked },
                         'Temperature color'
-                      )
-                    ),
-                    _react2.default.createElement(
-                      _reactBootstrap.OverlayTrigger,
-                      { placement: 'top', overlay: rotation },
-                      _react2.default.createElement(
-                        _reactBootstrap.DropdownButton,
-                        { id: 'DropdownRotate', title: 'Rotate', disabled: this.props.liveRun === 1 },
-                        _react2.default.createElement(
-                          _reactBootstrap.MenuItem,
-                          { onClick: function onClick() {
-                              _this2.rotation(90);
-                            }, disabled: this.props.liveRun === 1 },
-                          _react2.default.createElement(_reactBootstrap.Glyphicon, { glyph: 'refresh' }),
-                          ' Rotate 90'
-                        ),
-                        _react2.default.createElement(
-                          _reactBootstrap.MenuItem,
-                          { onClick: function onClick() {
-                              _this2.rotation(180);
-                            }, disabled: this.props.liveRun === 1 },
-                          _react2.default.createElement(_reactBootstrap.Glyphicon, { glyph: 'refresh' }),
-                          ' Rotate 180'
-                        ),
-                        _react2.default.createElement(
-                          _reactBootstrap.MenuItem,
-                          { onClick: function onClick() {
-                              _this2.rotation(270);
-                            }, disabled: this.props.liveRun === 1 },
-                          _react2.default.createElement(_reactBootstrap.Glyphicon, { glyph: 'refresh' }),
-                          ' Rotate 270'
-                        )
                       )
                     )
                   )
@@ -31407,9 +31373,7 @@ var Options = function (_React$Component) {
         if (1 / _reactDom2.default.findDOMNode(this.refs.sampling).value - this.props.exposureTimeValue > this.props.maxLatencyTime || 1 / _reactDom2.default.findDOMNode(this.refs.sampling).value - this.props.exposureTimeValue < this.props.minLatencyTime) {
           this.props.latencyTimeNotInRange();
         } else {
-          if (this.props.liveRun === this.props.liveSet || this.props.liveSet == 1 && this.props.liveRun == 0) {
-            this.props.setImgDisplay();
-          }
+          this.props.setImgDisplay();
         }
       }
     }
@@ -31818,8 +31782,8 @@ function options() {
       {
         if (state.buttonAcquireStyle === 'success' && state.liveCheckedBool == 1) {
           // User start a live mode
-          return Object.assign({}, state, { buttonAcquireStyle: 'danger', buttonAcquireText: "Stop", buttonAcquireGlyphiconText: "stop", liveCheckedBool: 0, liveRun: 1, acqImage: 0 });
-        } else if (state.buttonAcquireStyle === 'danger' && state.liveCheckedBool == 0) {
+          return Object.assign({}, state, { buttonAcquireStyle: 'danger', buttonAcquireText: "Stop", buttonAcquireGlyphiconText: "stop", liveRun: 1, acqImage: 0 });
+        } else if (state.buttonAcquireStyle === 'danger' && state.liveRun == 1) {
           // User stop live mode
           return Object.assign({}, state, { buttonAcquireStyle: 'success', buttonAcquireText: "Acquire", buttonAcquireGlyphiconText: "play", liveSet: 0, liveRun: 0, acqImage: 0 });
         } else {

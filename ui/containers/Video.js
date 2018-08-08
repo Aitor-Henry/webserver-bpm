@@ -64,7 +64,7 @@ class Video extends React.Component {
       for(let i=0;i <= this.props.profileX.length;i++){
         data.push([i, this.props.profileX[i]]);
       }
-      this.graph_profilX = new Dygraph(document.getElementById("graph1"), data, {drawPoints: false, showRoller: false, legend : 'never',labels: ['Profile_X', 'Intensity'], dateWindow : [0, this.props.profileX.length], width : this.props.windowWidth, height : this.props.windowHeight/2,
+      this.graph_profilX = new Dygraph(document.getElementById("graph1"), data, {drawPoints: false, showRoller: false, legend : 'never',labels: ['Profile_X', 'Intensity'], dateWindow : [0, this.props.profileX.length], width : this.props.windowWidth, height : this.props.windowHeight/3,
                                                                               axes: {
                                                                                 y: {
                                                                                   axisLabelFormatter: function(y) {
@@ -78,7 +78,7 @@ class Video extends React.Component {
     for(let i=0; i < this.props.profileY.length; i++){
       data2.push([this.props.profileY[this.props.profileY.length-(i+1)],i])
     }                                
-    this.graph_profilY = new Dygraph(document.getElementById("graph2"), data2, {drawPoints: false, showRoller: false, legend : 'never',labels: ['Intensity', 'Profile_Y'], dateWindow : [Math.min(...this.props.profileY),Math.max(...this.props.profileY)], width : this.props.windowWidth/2, height : this.props.windowHeight,
+    this.graph_profilY = new Dygraph(document.getElementById("graph2"), data2, {drawPoints: false, showRoller: false, legend : 'never',labels: ['Intensity', 'Profile_Y'], dateWindow : [Math.min(...this.props.profileY),Math.max(...this.props.profileY)], width : this.props.windowWidth/3, height : this.props.windowHeight,
                                                                               axes: {
                                                                                 x: {
                                                                                   axisLabelFormatter: function(x) {
@@ -95,7 +95,7 @@ class Video extends React.Component {
       this.graph_profilX.updateOptions({'file' : data,
                                       dateWindow : [0, this.props.profileX.length],
                                       width : this.props.windowWidth,
-                                      height : this.props.windowHeight/2,})
+                                      height : this.props.windowHeight/3,})
       
     var data2 = [];
     for(let i=0; i < this.props.profileY.length; i++){
@@ -103,7 +103,7 @@ class Video extends React.Component {
     }
     this.graph_profilY.updateOptions({'file' : data2,
                                      dateWindow : [Math.min(...this.props.profileY),Math.max(...this.props.profileY)],
-                                     width : this.props.windowWidth/2,
+                                     width : this.props.windowWidth/3,
                                      height : this.props.windowHeight})
     }
     if(this.props.liveRun===1 && this.props.profileX!==prevProps.profileX){
@@ -144,7 +144,7 @@ class Video extends React.Component {
                   <ButtonGroup>
 
                     <OverlayTrigger placement="left" overlay={crosshair}>
-                      <SplitButton title='Lock Crosshair'   id="bg-vertical-splitbuttons-1" onClick={this.props.setCrosshair} disabled={this.props.liveRun ===1 || this.props.rotate!=0 || this.props.beam_markX===undefined || this.props.beam_markY===undefined} active={this.props.activeCrosshair}>
+                      <SplitButton title='Lock Crosshair'   id="bg-vertical-splitbuttons-1" onClick={this.props.setCrosshair} disabled={this.props.liveRun ===1 || this.props.beam_markX===undefined || this.props.beam_markY===undefined} active={this.props.activeCrosshair}>
                         <MenuItem onClick={this.resetCROSSHAIR} disabled={this.props.liveRun ===1}> Reset <Glyphicon glyph="screenshot" /></MenuItem>
                       </SplitButton>
                     </OverlayTrigger>
@@ -154,7 +154,7 @@ class Video extends React.Component {
                     </OverlayTrigger>
 
                     <OverlayTrigger placement="top" overlay={roi}>
-                      <SplitButton title='ROI'   id="bg-vertical-splitbuttons-2" onClick={this.props.setRoi} disabled={this.props.liveRun ===1 || this.props.rotate!=0} active={this.props.activeROI}>
+                      <SplitButton title='ROI'   id="bg-vertical-splitbuttons-2" onClick={this.props.setRoi} disabled={this.props.liveRun ===1} active={this.props.activeROI}>
                       <MenuItem onClick={this.resetROI} disabled={this.props.liveRun ===1 || this.props.resetDesactivated}><Glyphicon glyph="remove" /> Reset ROI</MenuItem>
                     </SplitButton>
                     </OverlayTrigger>
@@ -167,13 +167,13 @@ class Video extends React.Component {
                       <Checkbox onChange={this.props.temperatureChecked}>Temperature color</Checkbox>
                     </DropdownButton>
 
-                    <OverlayTrigger placement="top" overlay={rotation}>
+                    {/*<OverlayTrigger placement="top" overlay={rotation}>
                       <DropdownButton id='DropdownRotate' title ='Rotate' disabled={this.props.liveRun ===1}>
                         <MenuItem onClick={()=>{this.rotation(90)}} disabled={this.props.liveRun ===1}><Glyphicon glyph="refresh" /> Rotate 90</MenuItem>
                         <MenuItem onClick={()=>{this.rotation(180)}} disabled={this.props.liveRun ===1}><Glyphicon glyph="refresh" /> Rotate 180</MenuItem>
                         <MenuItem onClick={()=>{this.rotation(270)}} disabled={this.props.liveRun ===1}><Glyphicon glyph="refresh" /> Rotate 270</MenuItem>
                       </DropdownButton>
-                    </OverlayTrigger>
+                    </OverlayTrigger>*/}
 
                   </ButtonGroup>
                   </div>
